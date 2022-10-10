@@ -1,0 +1,28 @@
+[
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1642205512, "endType": "buyNow", "endTime": 1643209133, "floorPrice": 6.1
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643916643, "endType": "delist", "endTime": 1643917059, "floorPrice": 7.6
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643917113, "endType": "delist", "endTime": 1643917963, "floorPrice": 7.5
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643918009, "endType": "delist", "endTime": 1643918052, "floorPrice": 7.45
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643918097, "endType": "delist", "endTime": 1643919813, "floorPrice": 7.6
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643919857, "endType": "delist", "endTime": 1643930056, "floorPrice": 7.4
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643939046, "endType": "delist", "endTime": 1643940143, "floorPrice": 7.9
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1643940197, "endType": "buyNow", "endTime": 1643946945, "floorPrice": 7.8
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1645448239, "endType": "relist", "endTime": 1645536244, "floorPrice": 34.0
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1645536244, "endType": "buyNow", "endTime": 1645581037, "floorPrice": 29.569
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1650654664, "endType": "delist", "endTime": 1650654804, "floorPrice": 204.0
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1650655813, "endType": "buyNow", "endTime": 1650666687, "floorPrice": 220.0
+    },
+    {"tokenMint": "FFvkb1h4FXdmbqYBbBHRbe2fmtfWQ3dCxRfVHDgJfRqU", "startType": "list", "startTime": 1665232349, "endType": 0, "endTime": 0, "floorPrice": 436.0
+    }
+]

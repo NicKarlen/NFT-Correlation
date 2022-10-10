@@ -5,7 +5,17 @@ import requests, json
 
 """
     Fetch api form MagicEden and get the raw data for all the activities
-    The types are : ['cancelBid', 'list', 'delist', 'bid', 'buyNow']
+    The types are : [bid
+                    cancelBid
+                    delist
+                    list
+                    buyNow
+                    auctionCreated
+                    auctionSettled
+                    auctionPlaceBid
+                    auctionCanceled
+                    buy]
+    I will ignore the actions
 """
 # 
 def get_activities(collection: string):
@@ -28,15 +38,19 @@ def get_activities(collection: string):
         if json_res == []:
             response_empty = True
             break
-
+        
+        count = 0
         # Filter out the type of transaction that are not need to create a floor price model
         for item in json_res:
-            if item["type"] not in ['list', 'delist', 'buyNow']:
+            if item["type"] not in ['list', 'delist', 'buyNow', 'buy']:
                 continue
             activities.append(item)
+            count = count +1
         
         offset = offset + 1000
         print(f"Offset is: {offset}")
+        print(f"Count is: {count}")
+        count = 0
         sleep(0.6)
 
     # XXX needs to be interduces: do check for dublicates we can create a "set()" and go back to a "list()"... list(set(XX))
@@ -44,8 +58,17 @@ def get_activities(collection: string):
     
     return activities
 
+"""
+    Get current FloorPrice of a project. (Single value)
+"""
 
+def get_current_FloorPrice(collection : string):
 
+    url = f"https://api-mainnet.magiceden.dev/v2/collections/{collection}/stats"
+    req = requests.get(url)
+    res =json.loads(req.text)
+
+    return res["floorPrice"] / 1000000000
 
 
 
