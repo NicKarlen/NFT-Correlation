@@ -29,7 +29,7 @@ def get_floorPrice(collection: str, resolution: str):
     # regular request with the python module "requests" does not work 
     scraper = cloudscraper.create_scraper() 
     res = scraper.get(url)
-    
+
     return json.loads(res.text)
 
 
@@ -61,10 +61,10 @@ def get_tradingpair_price(traidingpair: str, start_datetime : str):
     starttime = int(datetime.strptime(start_datetime, '%d.%m.%Y %H:%M:%S').timestamp() * 1000)
     # calculate the endtime that we always get the 1h-candles for 40d
     endTime = starttime + 3456000000  # 40d = 3456000000
-    # assign the url for the endpoint
+
     url = 'https://api.binance.com/api/v3/klines'
-    # creat the array to store all the responses
     candles_until_today = []
+
     # while loop for as long as we don't get an empty loop as response from the api
     while True:
         # specify the parameters for the request
@@ -75,10 +75,10 @@ def get_tradingpair_price(traidingpair: str, start_datetime : str):
         'endTime': endTime,
         'limit': 1000
         }
-        # make the request
+
         res = requests.get(url, params=params)
-        # parse the response in to a json obj
         json_res = json.loads(res.text)
+
         # exit the loop if array is empty
         if json_res == []:
             break
@@ -87,7 +87,7 @@ def get_tradingpair_price(traidingpair: str, start_datetime : str):
         # adjust start and end time for next request
         starttime = endTime + 3600000           # 1h = 3600000
         endTime = endTime + 3456000000    
-        # timeout so we don't trigger the rates limit of the api
+
         sleep(0.6)
 
     # store in file
