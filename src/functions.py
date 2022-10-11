@@ -1,5 +1,3 @@
-from queue import Empty
-import string
 from time import sleep
 import requests, json
 
@@ -18,9 +16,9 @@ import requests, json
     I will ignore the actions
 """
 # 
-def get_activities(collection: string):
+def get_activities(collection: str):
 
-    def do_request(collection: string, offset: int):
+    def do_request(collection: str, offset: int):
         url = f"https://api-mainnet.magiceden.dev/v2/collections/{collection}/activities?offset={offset}&limit=1000"
         req = requests.get(url)
 
@@ -42,8 +40,8 @@ def get_activities(collection: string):
         count = 0
         # Filter out the type of transaction that are not need to create a floor price model
         for item in json_res:
-            if item["type"] not in ['list', 'delist', 'buyNow', 'buy']:
-                continue
+            # if item["type"] not in ['list', 'delist', 'buyNow', 'buy']:
+            #     continue
             activities.append(item)
             count = count +1
         
@@ -62,69 +60,10 @@ def get_activities(collection: string):
     Get current FloorPrice of a project. (Single value)
 """
 
-def get_current_FloorPrice(collection : string):
+def get_current_FloorPrice(collection : str):
 
     url = f"https://api-mainnet.magiceden.dev/v2/collections/{collection}/stats"
     req = requests.get(url)
-    res =json.loads(req.text)
+    res = json.loads(req.text)
 
     return res["floorPrice"] / 1000000000
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# attemnt to use the query api from the main site but i don't have access... link: https://devpost.com/software/analytics-seller-classification 
-def experiment():
-    
-
-    url = f"https://api-mainnet.magiceden.io/rpc/getGlobalActivitiesByQuery"
-
-    payload={
-        "$match":{"collection_symbol":"okay_bears"},
-        "$sort":{"blockTime":-1,"createdAt":-1},
-        "$skip":0
-    }
-    headers = {}
-
-    response = requests.request("GET", url, headers=headers, data=payload)
-    
-
-    print(response.text)
-
-
-    """
-    q:  {"$match":{"txType":{"$in":["exchange","acceptBid","auctionSettled"]},
-        "source":{"$nin":["yawww","solanart","tensortrade","hadeswap","coralcube_v2","hyperspace"]},
-        "collection_symbol":"okay_bears"},
-        "$sort":{"blockTime":-1,"createdAt":-1},
-        "$skip":100,"$limit":50}
-    
-    """

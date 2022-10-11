@@ -191,7 +191,7 @@ if __name__ == "__main__":
     # logging.basicConfig(filename='NFT.log', encoding='utf-8', level=logging.INFO)
     # logging.info("Started logging,  Code running..........  %s", datetime.now())
 
-    # step_1()
+    step_1()
 
     step_2() # with step_3()
 
