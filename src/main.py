@@ -34,7 +34,7 @@ def step_2():
 
 def step_3():
     """
-        Prepare data for correlation comparison
+        Prepare data 1: Calc dollar value for collections
     """
     # calculate the dollar value for all collections (HINT can easily be looped over)
     df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection="degods")
@@ -43,11 +43,22 @@ def step_3():
 
 
 def step_4():
+    """
+        Prepare data 2: Merge all data in one dataframe
+    """
     tradingpairs = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
     collections = ["degods"] # at the moment only one collection!!!!!
 
-    f.create_single_table(tradingpairs=tradingpairs, collections=collections)
+    df = f.create_single_table(tradingpairs=tradingpairs, collections=collections)
+    # Write DB
+    f.write_df_to_sql(df=df, table_name="df_merge")
 
+def step_5():
+    """
+        calculate first pearson correlation 
+    """
+
+    f.calc_pearson_coefficient()
 
 if __name__ == "__main__":
     print("Start programm ", datetime.now())
@@ -57,7 +68,7 @@ if __name__ == "__main__":
     # step_1()
     # step_2()
     # step_3()
-
-    step_4()
+    # step_4()
+    step_5()
 
     print("Finished programm ", datetime.now())

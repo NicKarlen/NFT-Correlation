@@ -131,7 +131,7 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
 
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(candles_until_today)
-
+    # name the columns of the dataframe
     df.columns = [
         "Kline open time",
         "Open price",
@@ -235,21 +235,36 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> None
     column_names.extend(tradingpairs)
     column_names.extend(collections)
     df_merged.columns = column_names
+
+    # change all values to numerics
+    df_merged[column_names[1:]] = df_merged[column_names[1:]].apply(pd.to_numeric)
+
+    return df_merged
+
+
+def calc_pearson_coefficient_matrix() -> None:
+    """
+        Calculate the pearson coefficient matirx
+
+        HINT: I need one dataframe  of the assets i want to compare (BTC, SOL, all Collections)
+    """
+    # read DB
+    df = read_df_from_sql(table_name="df_merge")
+    # select the needed columns
+    df_selection = df[["BTCUSDT", "SOLUSDT", "ETHUSDT", "degods"]]
+
+    print(df_selection.head())
+    # calculate the pearson correlation coefficients (matix)
+    corr = df_selection.corr(method="pearson")
     
-    print(df_merged)
+    print("\nPearson correlation index: \n")
+    print(corr)
+
 
 
 def calc_pearson_coefficient(df: pd.DataFrame) -> pd.DataFrame:
     """
         Calculate the continues r for one Collection to a Tradingpair
-    """
-    pass
-
-
-def calc_pearson_coefficient_matrix(df: pd.DataFrame) -> pd.DataFrame:
-    """
-        HINT: I need one dataframe with all the percentage changes of the assets i want to compare (BTC, SOL, all Collections)
-        Calculate the pearson coefficient 
     """
     pass
 
