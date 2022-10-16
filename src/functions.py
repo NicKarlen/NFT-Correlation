@@ -20,7 +20,7 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str) -> None:
         Write a pandas DataFrame to the Database
     """
     con = sqlite3.connect('data/database.db')
-    df.to_sql(name=table_name, con=con, if_exists="replace", index_label="Myidx")
+    df.to_sql(name=table_name, con=con, if_exists="replace")
     con.close()
 
 
@@ -42,8 +42,8 @@ def get_floorPrice(collection: str, resolution: str):
 
     """
     # raise an error if the argument is not supported
-    if resolution not in ["1h", "4h"]:
-        raise ValueError("resolution: value not supported, must be one of %r." % ["1h", "4h"])
+    if resolution not in ["1h", "4h", "1d"]:
+        raise ValueError("resolution: value not supported, must be one of %r." % ["1h", "4h", "1d"])
 
 
     url = f"""https://stats-mainnet.magiceden.io/collection_stats/getCollectionTimeSeries/{collection}?edge_cache=true&resolution={resolution}&addLastDatum=true"""
@@ -52,7 +52,10 @@ def get_floorPrice(collection: str, resolution: str):
     scraper = cloudscraper.create_scraper() 
     res = scraper.get(url)
 
-    return json.loads(res.text)
+    # Create a Dataframe from a dictionary
+    df = pd.DataFrame(json.loads(res.text))
+
+    return df
 
 
 def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: str):
@@ -126,16 +129,49 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
 
         sleep(0.6)
 
-    # store in file
-    with open('data/test.json', 'w') as outfile:
-        json.dump(candles_until_today, outfile)
+    # Create a Dataframe from a dictionary
+    df = pd.DataFrame(candles_until_today)
+
+    df.columns = [
+        "Kline open time",
+        "Open price",
+        "High price",
+        "Low price",
+        "Close price",
+        "Volume",
+        "Kline Close time",
+        "Quote asset volume",
+        "Number of trades",
+        "Taker buy base asset volume",
+        "Taker buy quote asset volume",
+        "Unused field"
+    ]
+
+    return df
 
 
-def calc_dollar_value(df_tradingpair: pd.DataFrame, df_floorprice) -> pd.DataFrame:
+def calc_dollar_value_of_collectoin(df_tradingpair: pd.DataFrame, df_floorprice: pd.DataFrame) -> pd.DataFrame:
     """
         Calculate the dollar value from the Floor Price based on the relavant Traidingpair
+
     """
-    pass
+    df_floorprice["cFP in Dollar"] = 0
+
+    def calc_dollar_price(row):
+        try:
+            price = df_tradingpair.loc[df_tradingpair["Kline Close time"] == (row["ts"]-1), "Close price"].values[0]
+        except:
+            price = 0
+
+        row["cFP in Dollar"] = row["cFP"] * float(price)
+
+        return row
+
+    df_floorprice = df_floorprice.apply(calc_dollar_price, axis=1)
+
+    return df_floorprice
+
+    
 
 def create_percent_changes(df : pd.DataFrame, column_name: str) -> pd.DataFrame:
     """
