@@ -58,7 +58,7 @@ def step_5():
         calculate first pearson correlation 
     """
 
-    f.calc_pearson_coefficient()
+    f.calc_pearson_coefficient_matrix()
 
 if __name__ == "__main__":
     print("Start programm ", datetime.now())
