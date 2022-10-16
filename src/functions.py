@@ -24,7 +24,7 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str) -> None:
     con.close()
 
 
-def get_floorPrice(collection: str, resolution: str):
+def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
     """
         Function to get the floor price history for a certain collection with a certain resolution.
 
@@ -58,7 +58,7 @@ def get_floorPrice(collection: str, resolution: str):
     return df
 
 
-def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: str):
+def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: str) -> pd.DataFrame:
     """
         Get the candle data for a specific tradingpair on binance
 
@@ -150,40 +150,93 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
     return df
 
 
-def calc_dollar_value_of_collectoin(df_tradingpair: pd.DataFrame, df_floorprice: pd.DataFrame) -> pd.DataFrame:
+def calc_dollar_value_of_collection(tradingpair: str, collection: str) -> None:
     """
         Calculate the dollar value from the Floor Price based on the relavant Traidingpair
-
     """
+    # Read DB
+    df_collection = read_df_from_sql(table_name=collection)
+    df_tradingpair = read_df_from_sql(table_name=tradingpair)
+    # Insert new row
     df_floorprice["cFP in Dollar"] = 0
-
+    # check for the timestamp and calculate the closing Floor price in dollar
     def calc_dollar_price(row):
+        # if we do not find a matching timestamp we say that the price is 0
         try:
             price = df_tradingpair.loc[df_tradingpair["Kline Close time"] == (row["ts"]-1), "Close price"].values[0]
         except:
             price = 0
-
+        # floor price in X * X/Dollar (tradingpair)
         row["cFP in Dollar"] = row["cFP"] * float(price)
-
+        # return the adjusted row
         return row
-
+    # run above functinon over all rows
     df_floorprice = df_floorprice.apply(calc_dollar_price, axis=1)
 
     return df_floorprice
 
+
+def create_single_table(tradingpairs: list[str], collections: list[str]) -> None:
+    """
+        Create one Dataframe with all the prices of the analysed traingpair-prices and collection-floorprices
+    """
+    # get an array of all tradingpair dataframes
+    df_arr_tradingpairs = []
+    for tp in tradingpairs:
+        # read from DB
+        df = read_df_from_sql(table_name=tp)
+        # drop all unneeded columns
+        df.drop([
+                "Kline open time",
+                "Open price",
+                "High price",
+                "Low price",
+                "Volume",
+                "Quote asset volume",
+                "Number of trades",
+                "Taker buy base asset volume",
+                "Taker buy quote asset volume",
+                "Unused field"
+                ], axis=1, inplace=True)
+        # adjust timestamp so it is equal to the one in the collection df
+        df["Kline Close time"] = df["Kline Close time"] +1 
+        # append to array
+        df_arr_tradingpairs.append(df)
+
+    # merge all the traidingpair dataframes on the timestamp
+    df_merged = df_arr_tradingpairs[0]
+    if len(df_arr_tradingpairs) > 1:
+        for df in df_arr_tradingpairs[1:]:
+            df_merged = pd.concat([df_merged.set_index('Kline Close time'),df.set_index('Kline Close time')], axis=1, join='inner').reset_index()
+
     
 
-def create_percent_changes(df : pd.DataFrame, column_name: str) -> pd.DataFrame:
-    """
-        :param str columnName: The Name of the column which should be taken to calculate the percentage changes on
+    # get an array of all collection dataframes
+    df_arr_collections = []
+    for collection in collections:
+        # read from DB
+        df = read_df_from_sql(table_name=collection)
+        # drop all unneeded columns
+        df.drop(["index","cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV"], axis=1, inplace=True)
+        df.set_index("level_0", inplace=True)
+        # append to dataframe
+        df_arr_collections.append(df)
 
-        Create a the percentage change from one datapoint to the next
-    """
-    print(df.head(50))
-
-    df['%-Change'] = df[column_name].pct_change()
-
-    print(df.head(50))
+    # DOESN'T WORK AT THE MOMENT WITH MORE THAN ONE COLLECTION!
+    # The problem is i would need to make a left join because the collections data is not always the same but then i will have problems
+    # making a pearson correlation matrix because i dont compare same timeframes... 
+    for df in df_arr_collections:
+        df_merged = pd.concat([df_merged.set_index('Kline Close time'),df.set_index('ts')], axis=1, join='inner').reset_index()
+   
+    # drop all index rows.
+    df_merged.drop("index", axis=1, inplace=True)
+    # rename the dataframe columns accordingly
+    column_names = ["timestamp"]
+    column_names.extend(tradingpairs)
+    column_names.extend(collections)
+    df_merged.columns = column_names
+    
+    print(df_merged)
 
 
 def calc_pearson_coefficient(df: pd.DataFrame) -> pd.DataFrame:

@@ -23,7 +23,7 @@ def step_2():
     """
         Get the raw data for a Tradingpair from Binance
     """
-    all_tradingpairs = ["BTCUSDT", "SOLUSDT"]
+    all_tradingpairs = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
 
     for tp in all_tradingpairs:
         # get candles
@@ -36,24 +36,28 @@ def step_3():
     """
         Prepare data for correlation comparison
     """
-    # Read DB
-    df_collection = f.read_df_from_sql(table_name="degods")
-    df_traidingpair = f.read_df_from_sql(table_name="SOLUSDT")
-
-    df_updated_with_dollar_price = f.calc_dollar_value_of_collectoin(df_tradingpair=df_traidingpair, df_floorprice=df_collection)
-
+    # calculate the dollar value for all collections (HINT can easily be looped over)
+    df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection="degods")
     # Write DB
-    f.write_df_to_sql(df=df_updated_with_dollar_price, table_name="degods")
+    f.write_df_to_sql(df=df, table_name="degods")
+
+
+def step_4():
+    tradingpairs = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
+    collections = ["degods"] # at the moment only one collection!!!!!
+
+    f.create_single_table(tradingpairs=tradingpairs, collections=collections)
+
 
 if __name__ == "__main__":
     print("Start programm ", datetime.now())
     # logging.basicConfig(filename='NFT.log', encoding='utf-8', level=logging.INFO)
     # logging.info("Started logging,  Code running..........  %s", datetime.now())
 
-    step_1()
-    step_2()
-    step_3()
+    # step_1()
+    # step_2()
+    # step_3()
 
-
+    step_4()
 
     print("Finished programm ", datetime.now())
