@@ -1,6 +1,13 @@
 """
     to run the script enter in Terminal:
 
+    docs:
+    https://docs.streamlit.io/library/api-reference/utilities/st.set_page_config
+
+    how to deploy:
+    https://towardsdatascience.com/3-easy-ways-to-deploy-your-streamlit-web-app-online-7c88bb1024b1
+
+    command to run the server:
     streamlit run c:/Git/NFT-Correlation/src/web_show.py
 """
 from time import sleep
@@ -8,6 +15,7 @@ import streamlit as st
 import functions as f
 import main as main
 
+st.set_page_config(page_title="AFE2 Correlation", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
 # Navbar (Sidebar)
 with st.sidebar:
