@@ -11,35 +11,48 @@ ALL_COLLECTIONS = ["degods", "okay_bears", "t00bs", "trippin_ape_tribe", "degene
 ALL_TRADINGPAIRS = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
 
 
-def step_1():
+def step_1(webvisu: bool= False, input_collections: list[str] = []):
     """
         Get the raw data from MagicEden (main site endpoint)
     """
+    if webvisu == True:
+        collections = input_collections
+    else:
+        collections = ALL_COLLECTIONS
 
-    for collection in ALL_COLLECTIONS:
+    for collection in collections:
         # get floorprice
         df_floorprice = f.get_floorPrice(collection=collection, resolution="1d")
 
         # Write DB
         f.write_df_to_sql(df=df_floorprice, table_name=collection)
 
-def step_2():
+def step_2(webvisu: bool= False, input_tradingpairs: list[str] = []):
     """
         Get the raw data for a Tradingpair from Binance
     """
+    if webvisu == True:
+        traidingpairs = input_tradingpairs
+    else:
+        traidingpairs = ALL_TRADINGPAIRS
 
-    for tp in ALL_TRADINGPAIRS:
+    for tp in traidingpairs:
         # get candles
         df_tradingpair_candles = f.get_tradingpair_candles(traidingpair=tp, start_datetime='1.1.2022 01:00:00', resolution="1d")
 
         # Write DB
         f.write_df_to_sql(df=df_tradingpair_candles, table_name=tp)
 
-def step_3():
+def step_3(webvisu: bool= False, input_collections: list[str] = []):
     """
         Prepare data 1: Calc dollar value for collections
     """
-    for collection in ALL_COLLECTIONS:
+    if webvisu == True:
+        collections = input_collections
+    else:
+        collections = ALL_COLLECTIONS
+
+    for collection in collections:
         # calculate the dollar value for all collections (HINT can easily be looped over)
         df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection=collection)
         # Write DB
@@ -81,13 +94,13 @@ if __name__ == "__main__":
     # logging.basicConfig(filename='NFT.log', encoding='utf-8', level=logging.INFO)
     # logging.info("Started logging,  Code running..........  %s", datetime.now())
 
-    # step_1()
-    # step_2()
-    # step_3()
+    step_1()
+    step_2()
+    step_3()
     # step_4()
     # step_5()
     # step_6()
-    step_7()
+    # step_7()
 
 
     print("Finished programm ", datetime.now())
