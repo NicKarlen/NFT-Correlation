@@ -3,6 +3,7 @@ import requests, json, sqlite3
 import cloudscraper
 from datetime import datetime
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def read_df_from_sql(table_name: str) -> pd.DataFrame:
@@ -158,7 +159,7 @@ def calc_dollar_value_of_collection(tradingpair: str, collection: str) -> None:
     df_collection = read_df_from_sql(table_name=collection)
     df_tradingpair = read_df_from_sql(table_name=tradingpair)
     # Insert new row
-    df_floorprice["cFP in Dollar"] = 0
+    df_collection["cFP in Dollar"] = 0
     # check for the timestamp and calculate the closing Floor price in dollar
     def calc_dollar_price(row):
         # if we do not find a matching timestamp we say that the price is 0
@@ -171,9 +172,9 @@ def calc_dollar_value_of_collection(tradingpair: str, collection: str) -> None:
         # return the adjusted row
         return row
     # run above functinon over all rows
-    df_floorprice = df_floorprice.apply(calc_dollar_price, axis=1)
+    df_collection = df_collection.apply(calc_dollar_price, axis=1)
 
-    return df_floorprice
+    return df_collection
 
 
 def create_single_table(tradingpairs: list[str], collections: list[str]) -> None:
@@ -252,8 +253,6 @@ def calc_pearson_coefficient_matrix() -> None:
     df = read_df_from_sql(table_name="df_merge")
     # select the needed columns
     df_selection = df[["BTCUSDT", "SOLUSDT", "ETHUSDT", "degods"]]
-
-    print(df_selection.head())
     # calculate the pearson correlation coefficients (matix)
     corr = df_selection.corr(method="pearson")
     
@@ -262,10 +261,54 @@ def calc_pearson_coefficient_matrix() -> None:
 
 
 
-def calc_pearson_coefficient(df: pd.DataFrame) -> pd.DataFrame:
+def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> None:
     """
-        Calculate the continues r for one Collection to a Tradingpair
+        Calculate the continues r for two assets
     """
-    pass
+    # read DB
+    df = read_df_from_sql(table_name="df_merge")
+    # select the needed columns
+    df_selection = df[[corr_asset_left, corr_asset_right]]
+    # calculate the pearson correlation coefficients (matix)
+
+    arr_corr = []
+    more_values = True
+    inc = 0
+    length = 30
+
+    while more_values:
+
+        try:
+            corr = df_selection.iloc[inc:length+inc].corr(method="pearson")
+            arr_corr.append({
+                    "timestamp": df.loc[length+inc, "timestamp"],
+                    "corr": corr.iloc[1,0]
+                })            
+
+            inc = inc + 1
+        except:
+            more_values = False
+
+    # Create a Dataframe from a dictionary
+    df_arr_corr = pd.DataFrame(arr_corr)
+
+    # Create a plot-window with 6 seperate plots with no shared X axis
+    fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+
+    df_arr_corr.plot(kind='line', x="timestamp", y="corr",ax=axes[0], xlabel='timestamp', color='black', legend=True)
+
+    df.plot(kind='line', x="timestamp", y=[corr_asset_left,corr_asset_right], 
+            secondary_y=[corr_asset_right],ax=axes[1], xlabel='timestamp', color=['red',"blue"], legend=True)
+
+    # Show the plot
+    plt.show()
+
+
+def show_line_chart(arr_assets: list[str]) -> None:
+    """
+        A function that shows a line chart with all the assets
+    """
+    for idx, asset in enumerate(arr_assets):
+        df = read_df_from_sql(table_name=asset)
 
 
