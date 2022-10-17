@@ -307,8 +307,26 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> Non
 def show_line_chart(arr_assets: list[str]) -> None:
     """
         A function that shows a line chart with all the assets
+
+        step0: We get the data form the DB for the asset.
+        step1: We calc the percentage change of the Closing FloorPrice in Dollars.
+        step2: We make a moving avarage of 25 days
+        step3: We create the line
+        step4: We show the legend and show the chart
+
     """
+    arr_colors = ["blue", "orange","green","red","purple","brown","pink","gray","olive","cyan"]
+
     for idx, asset in enumerate(arr_assets):
         df = read_df_from_sql(table_name=asset)
 
+        df["PercChanges"] = df["cFP in Dollar"].pct_change() * 100
 
+        df[asset] = df["PercChanges"].rolling(window=25).mean()
+
+        plt.plot("ts", asset, data=df,color=arr_colors[idx])
+
+    # show legend
+    plt.legend()
+    # Show the plot
+    plt.show()

@@ -72,7 +72,7 @@ def step_6():
 
 def step_7():
     """
-        show a chart of all collections price data
+        Show a chart of all collections price data
     """
     f.show_line_chart(arr_assets=ALL_COLLECTIONS)
 
