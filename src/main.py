@@ -74,8 +74,10 @@ def step_5():
     """
         calculate first pearson correlation 
     """
+    tradingpairs = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
+    collections = ["okay_bears"] # at the moment only one collection!!!!!
 
-    f.calc_pearson_coefficient_matrix()
+    f.calc_pearson_coefficient_matrix(tradingpairs=tradingpairs, collections=collections)
 
 def step_6():
     """

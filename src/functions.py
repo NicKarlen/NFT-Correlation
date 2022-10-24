@@ -177,7 +177,7 @@ def calc_dollar_value_of_collection(tradingpair: str, collection: str) -> None:
     return df_collection
 
 
-def create_single_table(tradingpairs: list[str], collections: list[str]) -> None:
+def create_single_table(tradingpairs: list[str], collections: list[str]) -> pd.DataFrame:
     """
         Create one Dataframe with all the prices of the analysed traingpair-prices and collection-floorprices
     """
@@ -243,21 +243,25 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> None
     return df_merged
 
 
-def calc_pearson_coefficient_matrix() -> None:
+def calc_pearson_coefficient_matrix(tradingpairs: list[str], collections: list[str]) -> pd.DataFrame:
     """
         Calculate the pearson coefficient matirx
 
         HINT: I need one dataframe  of the assets i want to compare (BTC, SOL, all Collections)
     """
+
+    select = tradingpairs + collections
     # read DB
     df = read_df_from_sql(table_name="df_merge")
     # select the needed columns
-    df_selection = df[["BTCUSDT", "SOLUSDT", "ETHUSDT", "degods"]]
+    df_selection = df[select]
     # calculate the pearson correlation coefficients (matix)
     corr = df_selection.corr(method="pearson")
     
     print("\nPearson correlation index: \n")
     print(corr)
+
+    return corr
 
 
 
