@@ -258,14 +258,14 @@ def calc_pearson_coefficient_matrix(tradingpairs: list[str], collections: list[s
     # calculate the pearson correlation coefficients (matix)
     corr = df_selection.corr(method="pearson")
     
-    print("\nPearson correlation index: \n")
-    print(corr)
+    # print("\nPearson correlation index: \n")
+    # print(corr)
 
     return corr
 
 
 
-def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> None:
+def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str, webvisu: bool= False, window_length: int=30):
     """
         Calculate the continues r for two assets
     """
@@ -278,7 +278,7 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> Non
     arr_corr = []
     more_values = True
     inc = 0
-    length = 30
+    length = window_length
 
     while more_values:
 
@@ -296,8 +296,16 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> Non
     # Create a Dataframe from a dictionary
     df_arr_corr = pd.DataFrame(arr_corr)
 
+    # if webvisu == True:
+    #     return [df, df_arr_corr]
+
     # Create a plot-window with 6 seperate plots with no shared X axis
     fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+
+    df_arr_corr["timestamp"] = df_arr_corr["timestamp"] / 1000
+    df_arr_corr["timestamp"] = df_arr_corr["timestamp"].apply(datetime.fromtimestamp)
+    df["timestamp"] = df["timestamp"] / 1000
+    df["timestamp"] = df["timestamp"].apply(datetime.fromtimestamp)
 
     df_arr_corr.plot(kind='line', x="timestamp", y="corr",ax=axes[0], xlabel='timestamp', color='black', legend=True)
 
@@ -305,6 +313,8 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str) -> Non
             secondary_y=[corr_asset_right],ax=axes[1], xlabel='timestamp', color=['red',"blue"], legend=True)
 
     # Show the plot
+    if webvisu == True:
+        return fig
     plt.show()
 
 
