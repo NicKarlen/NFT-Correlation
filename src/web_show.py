@@ -16,7 +16,7 @@ import main as main
 from datetime import datetime
 import pandas as pd
 
-st.set_page_config(page_title="AFE2 Correlation", page_icon=None, initial_sidebar_state="auto", menu_items=None, layout="wide") #, layout="wide"
+st.set_page_config(page_title="AFE2 Correlation", page_icon=None, initial_sidebar_state="auto", menu_items=None) #, layout="wide"
 
 # Navbar (Sidebar)
 with st.sidebar:
@@ -55,7 +55,6 @@ except:
 
 st.subheader(f"Correlation Matrix")
 try:
-    print(tradingpairs, [collection])
     df_merged = f.create_single_table(tradingpairs=tradingpairs, collections=[collection])
     f.write_df_to_sql(df=df_merged, table_name="df_merge")
     df_corr = f.calc_pearson_coefficient_matrix(tradingpairs=tradingpairs, collections=[collection])
