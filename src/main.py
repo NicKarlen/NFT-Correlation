@@ -99,7 +99,7 @@ def step_7():
     """
         Show a chart of all collections price data
     """
-    f.show_line_chart(arr_assets=ALL_COLLECTIONS)
+    f.show_line_chart(amount=20)
 
 if __name__ == "__main__":
     print("Start programm ", datetime.now())
@@ -107,14 +107,14 @@ if __name__ == "__main__":
     # logging.info("Started logging,  Code running..........  %s", datetime.now())
 
 
-    step_0()
+    # step_0()
     # step_1()
     # step_2()
     # step_3()
     # step_4()
     # step_5()
     # step_6()
-    # step_7()
+    step_7()
 
 
     print("Finished programm ", datetime.now())

@@ -27,7 +27,7 @@ arr_top_collection = df_top_collections["collectionSymbol"].values
 with st.sidebar:
     st.header("Control Panel")
     # step_1
-    collection = st.selectbox(label='Solana NFT Collection', options=arr_top_collection)
+    collection = st.selectbox(label='Solana NFT Collection', options=arr_top_collection, help="Choose from the top 1000 Solana NFT Collections (orderd by Volume)")
     tradingpairs = st.multiselect(label='Traidingpairs', options=main.ALL_TRADINGPAIRS, default=["SOLUSDT"])
     if st.button("Collect & Prepare fresh data"):
         with st.spinner('Wait for it...'):

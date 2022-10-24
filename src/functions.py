@@ -169,12 +169,16 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
     return df
 
 
-def calc_dollar_value_of_collection(tradingpair: str, collection: str) -> None:
+def calc_dollar_value_of_collection(tradingpair: str, collection: str = None, df_direct : pd.DataFrame = None) -> pd.DataFrame:
     """
         Calculate the dollar value from the Floor Price based on the relavant Traidingpair
     """
     # Read DB
-    df_collection = read_df_from_sql(table_name=collection)
+    if df_direct.empty:
+        df_collection = read_df_from_sql(table_name=collection)
+    else:
+        df_collection = df_direct
+
     df_tradingpair = read_df_from_sql(table_name=tradingpair)
     # Insert new row
     df_collection["cFP in Dollar"] = 0
@@ -336,7 +340,7 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str, webvis
     plt.show()
 
 
-def show_line_chart(arr_assets: list[str]) -> None:
+def show_line_chart(amount: int) -> None:
     """
         A function that shows a line chart with all the assets
 
@@ -347,17 +351,30 @@ def show_line_chart(arr_assets: list[str]) -> None:
         step4: We show the legend and show the chart
 
     """
-    arr_colors = ["blue", "orange","green","red","purple","brown","pink","gray","olive","cyan"]
 
-    for idx, asset in enumerate(arr_assets):
-        df = read_df_from_sql(table_name=asset)
+    df_top_collections = read_df_from_sql(table_name="Solana_Collections")
+    df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+    arr_top_collection = df_top_collections["collectionSymbol"].values
 
-        df["PercChanges"] = df["cFP in Dollar"].pct_change() * 100
 
-        df[asset] = df["PercChanges"].rolling(window=25).mean()
+    for idx, asset in enumerate(arr_top_collection[:amount]):
+        df = get_floorPrice(collection=asset, resolution="1d")
+        df = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df)
 
-        plt.plot("ts", asset, data=df,color=arr_colors[idx])
+        df.drop(df.tail(1).index,inplace=True) # drop last n rows
+        df.drop(df.head(1).index,inplace=True) # drop first n rows
 
+        #df["PercChanges"] = (df["cFP in Dollar"] - df.iloc[0, 9]) / df.iloc[0, 9] * 100
+
+        #df[asset] = df["PercChanges"]
+        df[asset] = df["cFP in Dollar"]
+
+        plt.plot("ts", asset, data=df)
+
+        # if idx == 5:
+        #     break
+
+    plt.yscale("log")
     # show legend
     plt.legend()
     # Show the plot
