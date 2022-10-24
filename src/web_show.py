@@ -18,14 +18,18 @@ import pandas as pd
 
 st.set_page_config(page_title="AFE2 Correlation", page_icon=None, initial_sidebar_state="auto", menu_items=None) #, layout="wide"
 
+
+df_top_collections = f.read_df_from_sql(table_name="Solana_Collections")
+df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+arr_top_collection = df_top_collections["collectionSymbol"].values
+
 # Navbar (Sidebar)
 with st.sidebar:
     st.header("Control Panel")
     # step_1
-    collection = st.selectbox(label='Solana NFT Collection', options=main.ALL_COLLECTIONS)
+    collection = st.selectbox(label='Solana NFT Collection', options=arr_top_collection)
     tradingpairs = st.multiselect(label='Traidingpairs', options=main.ALL_TRADINGPAIRS, default=["SOLUSDT"])
     if st.button("Collect & Prepare fresh data"):
-        print([collection])
         with st.spinner('Wait for it...'):
             main.step_1(webvisu=True, input_collections=[collection])
             main.step_2(webvisu=True, input_tradingpairs=tradingpairs)
@@ -75,7 +79,7 @@ try:
 
     st.pyplot(figure)
 except:
-    st.warning("Data not ready yet...")
+    st.warning("Data not ready yet OR not enough data to calculate")
 
 
 

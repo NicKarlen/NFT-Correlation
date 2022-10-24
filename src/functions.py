@@ -25,6 +25,24 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str) -> None:
     con.close()
 
 
+def get_collections() -> pd.DataFrame:
+    """
+        Function to get the top 1000 most popular NFT collections from MagicEden
+    """
+
+    url = "https://stats-mainnet.magiceden.io/collection_stats/popular_collections/sol?limit=1000&window=30d"
+
+    # we use the cloudscraper libary because it handles the request to websites that are protected against misuse.
+    # regular request with the python module "requests" does not work 
+    scraper = cloudscraper.create_scraper() 
+    res = scraper.get(url)
+
+    # Create a Dataframe from a dictionary
+    df = pd.DataFrame(json.loads(res.text))
+
+    return df
+
+
 def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
     """
         Function to get the floor price history for a certain collection with a certain resolution.

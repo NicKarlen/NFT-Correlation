@@ -11,6 +11,16 @@ ALL_COLLECTIONS = ["degods", "okay_bears", "t00bs", "trippin_ape_tribe", "degene
 ALL_TRADINGPAIRS = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
 
 
+
+def step_0():
+    """
+        Get the most popular Solana NFT Collections
+    """
+    df = f.get_collections()
+
+    f.write_df_to_sql(df=df,table_name="Solana_Collections")
+
+
 def step_1(webvisu: bool= False, input_collections: list[str] = []):
     """
         Get the raw data from MagicEden (main site endpoint)
@@ -96,9 +106,11 @@ if __name__ == "__main__":
     # logging.basicConfig(filename='NFT.log', encoding='utf-8', level=logging.INFO)
     # logging.info("Started logging,  Code running..........  %s", datetime.now())
 
-    step_1()
-    step_2()
-    step_3()
+
+    step_0()
+    # step_1()
+    # step_2()
+    # step_3()
     # step_4()
     # step_5()
     # step_6()
