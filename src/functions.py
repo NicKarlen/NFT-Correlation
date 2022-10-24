@@ -364,17 +364,15 @@ def show_line_chart(amount: int) -> None:
         df.drop(df.tail(1).index,inplace=True) # drop last n rows
         df.drop(df.head(1).index,inplace=True) # drop first n rows
 
-        #df["PercChanges"] = (df["cFP in Dollar"] - df.iloc[0, 9]) / df.iloc[0, 9] * 100
+        df["PercChanges"] = (df["cFP in Dollar"] - df.iloc[0, 9]) / df.iloc[0, 9] * 100
 
-        #df[asset] = df["PercChanges"]
-        df[asset] = df["cFP in Dollar"]
+        df[asset] = df["PercChanges"]
+        #df[asset] = df["cFP in Dollar"]
 
         plt.plot("ts", asset, data=df)
 
-        # if idx == 5:
-        #     break
 
-    plt.yscale("log")
+    plt.yscale("symlog", linthresh=50)
     # show legend
     plt.legend()
     # Show the plot
