@@ -101,6 +101,17 @@ def step_7():
     """
     f.show_line_chart(amount=20)
 
+
+def step_8():
+    """ 
+        Compare the returns on Investment. For NFT Collections we assume that one would invested on the close of the first traidingday.
+        For Tradingpairs we take the same date as the NFT Collection.
+    """
+
+    f.calc_returns(collection="degods", traidingpairs=ALL_TRADINGPAIRS)
+
+
+
 if __name__ == "__main__":
     print("Start programm ", datetime.now())
     # logging.basicConfig(filename='NFT.log', encoding='utf-8', level=logging.INFO)
@@ -114,7 +125,8 @@ if __name__ == "__main__":
     # step_4()
     # step_5()
     # step_6()
-    step_7()
+    # step_7()
+    step_8()
 
 
     print("Finished programm ", datetime.now())

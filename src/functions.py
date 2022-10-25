@@ -377,3 +377,34 @@ def show_line_chart(amount: int) -> None:
     plt.legend()
     # Show the plot
     plt.show()
+
+
+def calc_returns(collection: str, traidingpairs: list[str]) -> pd.DataFrame:
+    """
+        We calculate the ROI of a Collection and compare it to the ROI of a number of traidingpairs (e.g. BTC, SOL, ETH)
+
+        ROI = (Current value of Investment - Cost of Investment) / Cost of Investment
+    """
+
+    df_collection = read_df_from_sql(table_name=collection)
+    df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
+    df_collection.drop(df_collection.head(1).index,inplace=True) # drop first n rows
+
+    collection_first_row = df_collection.iloc[0]
+    collection_last_row = df_collection.iloc[-1]
+    
+    roi_collection = (collection_last_row["cFP in Dollar"] - collection_first_row["cFP in Dollar"]) / collection_first_row["cFP in Dollar"] * 100
+
+    dict_roi_tp = {}
+    for idx, tp in enumerate(traidingpairs):
+        df_tp = read_df_from_sql(table_name=tp)
+
+        tp_first_row = df_tp[df_tp["Kline Close time"] == collection_first_row["ts"]-1 ].reset_index()
+        tp_last_row = df_tp[df_tp["Kline Close time"] == collection_last_row["ts"]-1 ].reset_index()
+
+        # print(tp_first_row.loc[0,"Close price"])
+        # print(tp_last_row.loc[0,"Close price"])
+
+        dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
+
+    print(dict_roi_tp)
