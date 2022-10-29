@@ -1,9 +1,11 @@
+from os import read
 from time import sleep
 import requests, json, sqlite3
 import cloudscraper
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def read_df_from_sql(table_name: str) -> pd.DataFrame:
@@ -33,8 +35,8 @@ def get_collections() -> pd.DataFrame:
     url = "https://stats-mainnet.magiceden.io/collection_stats/popular_collections/sol?limit=1000&window=30d"
 
     # we use the cloudscraper libary because it handles the request to websites that are protected against misuse.
-    # regular request with the python module "requests" does not work 
-    scraper = cloudscraper.create_scraper() 
+    # regular request with the python module "requests" does not work
+    scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
 
     # Create a Dataframe from a dictionary
@@ -48,7 +50,7 @@ def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
         Function to get the floor price history for a certain collection with a certain resolution.
 
         respone example:
- 
+
         "cFP": 4.64,            Close FloorPrice
         "cLC": 507,             Close Listed Count
         "cV": 4.5,              Close Volume
@@ -67,8 +69,8 @@ def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
 
     url = f"""https://stats-mainnet.magiceden.io/collection_stats/getCollectionTimeSeries/{collection}?edge_cache=true&resolution={resolution}&addLastDatum=true"""
     # we use the cloudscraper libary because it handles the request to websites that are protected against misuse.
-    # regular request with the python module "requests" does not work 
-    scraper = cloudscraper.create_scraper() 
+    # regular request with the python module "requests" does not work
+    scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
 
     # Create a Dataframe from a dictionary
@@ -81,12 +83,12 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
     """
         Get the candle data for a specific tradingpair on binance
 
-        Doku: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data 
+        Doku: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data
 
         https://api.binance.com/api/v3/klines
 
         response example:
-        
+
         0:  1499040000000,      // Kline open time
         1:  "0.01634790",       // Open price
         2:  "0.80000000",       // High price
@@ -111,14 +113,14 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
     time_intervalls = {
         "1h": 3456000000,   # 40d      40d * 24h = 960 Datapoints (Limit is 1000)
         "4h": 13824000000,  # 160d     4 * that of 1h
-        "1d": 82944000000   # 960d     960 Datapoints   86400000=1d -> * 960 
+        "1d": 82944000000   # 960d     960 Datapoints   86400000=1d -> * 960
     }
     time_offset = {
         "1h": 3600000,  #  3600000 = 1h
         "4h": 14400000, #  3600000 * 4 = 14400000 is 4h
         "1d": 86400000  #  3600000 * 24 = 86400000 is 1d
     }
-    endTime = starttime + time_intervalls[resolution]  
+    endTime = starttime + time_intervalls[resolution]
 
     url = 'https://api.binance.com/api/v3/klines'
     candles_until_today = []
@@ -143,8 +145,8 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
         # add the response to the full array
         candles_until_today.extend(json_res)
         # adjust start and end time for next request
-        starttime = endTime + time_offset[resolution]     
-        endTime = endTime + time_intervalls[resolution]      
+        starttime = endTime + time_offset[resolution]
+        endTime = endTime + time_intervalls[resolution]
 
         sleep(0.6)
 
@@ -222,7 +224,7 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> pd.D
                 "Unused field"
                 ], axis=1, inplace=True)
         # adjust timestamp so it is equal to the one in the collection df
-        df["Kline Close time"] = df["Kline Close time"] +1 
+        df["Kline Close time"] = df["Kline Close time"] +1
         # append to array
         df_arr_tradingpairs.append(df)
 
@@ -232,7 +234,7 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> pd.D
         for df in df_arr_tradingpairs[1:]:
             df_merged = pd.concat([df_merged.set_index('Kline Close time'),df.set_index('Kline Close time')], axis=1, join='inner').reset_index()
 
-    
+
 
     # get an array of all collection dataframes
     df_arr_collections = []
@@ -247,10 +249,10 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> pd.D
 
     # DOESN'T WORK AT THE MOMENT WITH MORE THAN ONE COLLECTION!
     # The problem is i would need to make a left join because the collections data is not always the same but then i will have problems
-    # making a pearson correlation matrix because i dont compare same timeframes... 
+    # making a pearson correlation matrix because i dont compare same timeframes...
     for df in df_arr_collections:
         df_merged = pd.concat([df_merged.set_index('Kline Close time'),df.set_index('ts')], axis=1, join='inner').reset_index()
-   
+
     # drop all index rows.
     df_merged.drop("index", axis=1, inplace=True)
     # rename the dataframe columns accordingly
@@ -279,7 +281,7 @@ def calc_pearson_coefficient_matrix(tradingpairs: list[str], collections: list[s
     df_selection = df[select]
     # calculate the pearson correlation coefficients (matix)
     corr = df_selection.corr(method="pearson")
-    
+
     # print("\nPearson correlation index: \n")
     # print(corr)
 
@@ -309,7 +311,7 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str, webvis
             arr_corr.append({
                     "timestamp": df.loc[length+inc, "timestamp"],
                     "corr": corr.iloc[1,0]
-                })            
+                })
 
             inc = inc + 1
         except:
@@ -331,7 +333,7 @@ def calc_pearson_coefficient(corr_asset_left: str, corr_asset_right: str, webvis
 
     df_arr_corr.plot(kind='line', x="timestamp", y="corr",ax=axes[0], xlabel='timestamp', color='black', legend=True)
 
-    df.plot(kind='line', x="timestamp", y=[corr_asset_left,corr_asset_right], 
+    df.plot(kind='line', x="timestamp", y=[corr_asset_left,corr_asset_right],
             secondary_y=[corr_asset_right],ax=axes[1], xlabel='timestamp', color=['red',"blue"], legend=True)
 
     # Show the plot
@@ -351,7 +353,7 @@ def show_line_chart(amount: int) -> None:
         step4: We show the legend and show the chart
 
     """
-
+    # get all the collections from the DB, order them by total Volume and create an array of collection names
     df_top_collections = read_df_from_sql(table_name="Solana_Collections")
     df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
     arr_top_collection = df_top_collections["collectionSymbol"].values
@@ -387,36 +389,39 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
 
         delay: To delay to start of the measuret (in days after the mint)
     """
+    # If the collection exists in the database will take that, else we fetch it via API
     try:
         df_collection = read_df_from_sql(table_name=collection)
     except:
         df_collection = get_floorPrice(collection=collection, resolution="1d")
         df_collection = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df_collection)
 
+    # Drop the first and last row of the collection data, because the first and last row are no full days
+    # and we can therefore not fine the timestamp in the tradingpairs data
     df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
     df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
-
+    # Get first and last row of the adjusted dataframe
     collection_first_row = df_collection.iloc[0]
     collection_last_row = df_collection.iloc[-1]
-    
+    # Calc the ROI for the collection from first day to last day
     roi_collection = (collection_last_row["cFP in Dollar"] - collection_first_row["cFP in Dollar"]) / collection_first_row["cFP in Dollar"] * 100
 
     dict_roi_tp = {}
     # Calc the return of the traidingpairs with the same start date as for the collection
     for tp in traidingpairs:
         df_tp = read_df_from_sql(table_name=tp)
-
+        # search for the row with the same timestamp as the one from the collection
         tp_first_row = df_tp[df_tp["Kline Close time"] == collection_first_row["ts"]-1 ].reset_index()
         tp_last_row = df_tp[df_tp["Kline Close time"] == collection_last_row["ts"]-1 ].reset_index()
 
-        # print(tp_first_row.loc[0,"Close price"])
-        # print(tp_last_row.loc[0,"Close price"])
+        # If we get data from the API that makes problems we just print out the collection name for later investigations
         try:
             dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
         except:
             print(tp_first_row)
             print(tp_last_row)
 
+    # if the function is used for the purpose of collecting data for the DB we create the needed dict with all the information
     if return_dict == True:
         dict_roi_tp["collection_ROI"] = roi_collection
         dict_roi_tp["Compare"] = dict_roi_tp["collection_ROI"] - dict_roi_tp[traidingpairs[0]]
@@ -429,23 +434,24 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
     # Calc the performance difference to the traindingpairs
     for asset in dict_roi_tp:
         dict_roi_tp[asset] = [dict_roi_tp[asset], dict_roi_tp[collection] - dict_roi_tp[asset]]
-
+    # Create a Dataframe from the Dict
     df_roi = pd.DataFrame.from_dict(dict_roi_tp,orient='index',columns=["ROI", "performance against collection"])
 
     return df_roi
 
 
-def compare_all_returns():
+def prep_compare_all_returns() -> None:
     """
         get all the ROI since beginning of every collection
 
         RUNTIME: ~10min
     """
-
+    # get all the collections from the DB, order them by total Volume and create an array of collection names
     df_top_collections = read_df_from_sql(table_name="Solana_Collections")
     df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
     arr_top_collection = df_top_collections["collectionSymbol"].values
 
+    # For every collection we run the calc_returns function and create a new dictionary
     list_all_returns = []
     for idx, coll in enumerate(arr_top_collection):
         try:
@@ -453,9 +459,42 @@ def compare_all_returns():
         except:
             print(coll)
 
-    
+    # Create a Dataframe from the collected data
     df_all_returns = pd.DataFrame.from_dict(list_all_returns)
-
+    # set index to the collection name
     df_all_returns.set_index("collection", inplace=True)
-
+    # save in DB
     write_df_to_sql(df=df_all_returns, table_name="Collection_all_returns")
+
+def plot_compare_all_returns() -> None:
+    """
+        Function to categorize the ROI's of all collection and make a distribution plot (bar-chart)
+    """
+    # Read data from DB
+    df_returns = read_df_from_sql(table_name="Collection_all_returns")
+    # Create the bins and labels for the .cut function.
+    # This is a categorization of the data
+    arr_bins    = [-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100,200,300,400,500,1000,2000,3000,4000,5000,10000,np.inf]
+    arr_labels  = [-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100,200,300,400,500,1000,2000,3000,4000,5000,10000,"inf"]
+    arr_labels = [str(label) for label in arr_labels]
+
+    # Perform the categorization for both the collection_ROI and also the "ROI compared to Bitcoin"
+    for col in ["collection_ROI", "Compare"]:
+        df_returns[col] = df_returns[col].round(decimals=0)
+        df_returns[f"{col}_groupe"] = pd.cut(
+                                x=df_returns[col],
+                                bins=arr_bins,
+                                labels=arr_labels,
+                            )
+    # Check how many values in which category and sort them by the category names
+    distribution_collection_ROI = df_returns["collection_ROI_groupe"].value_counts().sort_index()
+    distribution_Compare = df_returns["Compare_groupe"].value_counts().sort_index()
+
+    # plot two bar charts
+    fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+    distribution_collection_ROI.plot.bar(ax=axes[0],ylabel='Count of Collections', xlabel="ROI % Groups")
+    distribution_Compare.plot.bar(ax=axes[1],ylabel='Count of Collections', xlabel="ROI % Groups")
+    fig.suptitle("Oben der ROI von den Kollektionen\nUnten der ROI im Vergleich zu Bitcoin (über die jeweilige Lebensdauer der Kollektion)")
+
+    plt.show()
+

@@ -120,7 +120,11 @@ def step_9():
             citizens_by_solsteads, synergian, the_lurkers, senseilabs, le_dao, mj98, deadlyroulette, 
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
-    f.compare_all_returns()
+    # create data
+    #f.prep_compare_all_returns()
+    # plot data$
+    f.plot_compare_all_returns()
+
 
 
 
