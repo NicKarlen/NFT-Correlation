@@ -73,7 +73,7 @@ def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
 
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(json.loads(res.text))
-
+    sleep(0.3)
     return df
 
 
@@ -169,7 +169,7 @@ def get_tradingpair_candles(traidingpair: str, start_datetime: str, resolution: 
     return df
 
 
-def calc_dollar_value_of_collection(tradingpair: str, collection: str = None, df_direct : pd.DataFrame = None) -> pd.DataFrame:
+def calc_dollar_value_of_collection(tradingpair: str, collection: str = None, df_direct : pd.DataFrame = pd.DataFrame) -> pd.DataFrame:
     """
         Calculate the dollar value from the Floor Price based on the relavant Traidingpair
     """
@@ -379,7 +379,7 @@ def show_line_chart(amount: int) -> None:
     plt.show()
 
 
-def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.DataFrame:
+def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, return_dict: bool = False) -> pd.DataFrame:
     """
         We calculate the ROI of a Collection and compare it to the ROI of a number of traidingpairs (e.g. BTC, SOL, ETH)
 
@@ -387,8 +387,12 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.Da
 
         delay: To delay to start of the measuret (in days after the mint)
     """
+    try:
+        df_collection = read_df_from_sql(table_name=collection)
+    except:
+        df_collection = get_floorPrice(collection=collection, resolution="1d")
+        df_collection = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df_collection)
 
-    df_collection = read_df_from_sql(table_name=collection)
     df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
     df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
 
@@ -399,7 +403,7 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.Da
 
     dict_roi_tp = {}
     # Calc the return of the traidingpairs with the same start date as for the collection
-    for idx, tp in enumerate(traidingpairs):
+    for tp in traidingpairs:
         df_tp = read_df_from_sql(table_name=tp)
 
         tp_first_row = df_tp[df_tp["Kline Close time"] == collection_first_row["ts"]-1 ].reset_index()
@@ -407,8 +411,18 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.Da
 
         # print(tp_first_row.loc[0,"Close price"])
         # print(tp_last_row.loc[0,"Close price"])
+        try:
+            dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
+        except:
+            print(tp_first_row)
+            print(tp_last_row)
 
-        dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
+    if return_dict == True:
+        dict_roi_tp["collection_ROI"] = roi_collection
+        dict_roi_tp["Compare"] = dict_roi_tp["collection_ROI"] - dict_roi_tp[traidingpairs[0]]
+        dict_roi_tp["collection"] = collection
+        dict_roi_tp["start_timestamp"] = collection_first_row["ts"]
+        return dict_roi_tp
 
     dict_roi_tp[collection] = roi_collection
 
@@ -419,3 +433,29 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.Da
     df_roi = pd.DataFrame.from_dict(dict_roi_tp,orient='index',columns=["ROI", "performance against collection"])
 
     return df_roi
+
+
+def compare_all_returns():
+    """
+        get all the ROI since beginning of every collection
+
+        RUNTIME: ~10min
+    """
+
+    df_top_collections = read_df_from_sql(table_name="Solana_Collections")
+    df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+    arr_top_collection = df_top_collections["collectionSymbol"].values
+
+    list_all_returns = []
+    for idx, coll in enumerate(arr_top_collection):
+        try:
+            list_all_returns.append(calc_returns(collection=coll, traidingpairs=["BTCUSDT"], return_dict=True))
+        except:
+            print(coll)
+
+    
+    df_all_returns = pd.DataFrame.from_dict(list_all_returns)
+
+    df_all_returns.set_index("collection", inplace=True)
+
+    write_df_to_sql(df=df_all_returns, table_name="Collection_all_returns")

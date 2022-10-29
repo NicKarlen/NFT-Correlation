@@ -112,6 +112,16 @@ def step_8():
     #f.calc_returns(collection="metamercs_by_metacreed", traidingpairs=["BTCUSDT", "SOLUSDT"], delay=0)
     f.calc_returns(collection="metamercs_by_metacreed", traidingpairs=ALL_TRADINGPAIRS, delay=0)
 
+def step_9():
+    """
+        show a chart of the top 1000 collection returns
+
+        Worked for all the 1000 collection except:
+            citizens_by_solsteads, synergian, the_lurkers, senseilabs, le_dao, mj98, deadlyroulette, 
+            casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
+    """
+    f.compare_all_returns()
+
 
 
 if __name__ == "__main__":
@@ -128,7 +138,8 @@ if __name__ == "__main__":
     # step_5()
     # step_6()
     # step_7()
-    step_8()
+    # step_8()
+    step_9()
 
 
     print("Finished programm ", datetime.now())
