@@ -15,6 +15,8 @@ import functions as f
 import main as main
 from datetime import datetime
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 st.set_page_config(page_title="AFE2 Correlation", page_icon=None, initial_sidebar_state="auto", menu_items=None) #, layout="wide"
 
@@ -56,17 +58,20 @@ try:
 except:
     st.warning("Data not ready yet...")
 
-
+st.markdown("""---""")
 st.subheader(f"Correlation Matrix")
 try:
     df_merged = f.create_single_table(tradingpairs=tradingpairs, collections=[collection])
     f.write_df_to_sql(df=df_merged, table_name="df_merge")
     df_corr = f.calc_pearson_coefficient_matrix(tradingpairs=tradingpairs, collections=[collection])
-    st.table(df_corr)
+    #st.table(df_corr)
+    fig, ax = plt.subplots()
+    sns.heatmap(df_corr, ax=ax,annot=True,cmap='Blues',square=False)
+    st.write(fig)
 except:
     st.warning("Data not ready yet...")
 
-
+st.markdown("""---""")
 try:
 
     st.subheader(f"Correlation graph of {tradingpairs[0]} <-> {collection}")
@@ -81,6 +86,19 @@ try:
 except:
     st.warning("Data not ready yet OR not enough data to calculate")
 
+st.markdown("""---""")
+try:
+
+    st.subheader(f"ROI table of {tradingpairs} <-> {collection}")
+    st.write("Shows the ROI of the traingingpairs and the collection.")
+    slider_delay = st.slider('Delay of the measurement start [days after mint]:', min_value=0,max_value=100, value=0)
+
+    df_ROI = f.calc_returns(collection=collection, traidingpairs=tradingpairs, delay=slider_delay)
+
+    st.table(df_ROI)
+
+except:
+    st.warning("Data not ready yet OR not enough data to calculate")
 
 
 

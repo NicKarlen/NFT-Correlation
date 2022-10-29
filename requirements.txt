@@ -3,3 +3,4 @@ cloudscraper
 requests
 matplotlib
 streamlit
+seaborn

@@ -379,16 +379,18 @@ def show_line_chart(amount: int) -> None:
     plt.show()
 
 
-def calc_returns(collection: str, traidingpairs: list[str]) -> pd.DataFrame:
+def calc_returns(collection: str, traidingpairs: list[str], delay: int) -> pd.DataFrame:
     """
         We calculate the ROI of a Collection and compare it to the ROI of a number of traidingpairs (e.g. BTC, SOL, ETH)
 
         ROI = (Current value of Investment - Cost of Investment) / Cost of Investment
+
+        delay: To delay to start of the measuret (in days after the mint)
     """
 
     df_collection = read_df_from_sql(table_name=collection)
     df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
-    df_collection.drop(df_collection.head(1).index,inplace=True) # drop first n rows
+    df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
 
     collection_first_row = df_collection.iloc[0]
     collection_last_row = df_collection.iloc[-1]
@@ -396,6 +398,7 @@ def calc_returns(collection: str, traidingpairs: list[str]) -> pd.DataFrame:
     roi_collection = (collection_last_row["cFP in Dollar"] - collection_first_row["cFP in Dollar"]) / collection_first_row["cFP in Dollar"] * 100
 
     dict_roi_tp = {}
+    # Calc the return of the traidingpairs with the same start date as for the collection
     for idx, tp in enumerate(traidingpairs):
         df_tp = read_df_from_sql(table_name=tp)
 
@@ -407,4 +410,12 @@ def calc_returns(collection: str, traidingpairs: list[str]) -> pd.DataFrame:
 
         dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
 
-    print(dict_roi_tp)
+    dict_roi_tp[collection] = roi_collection
+
+    # Calc the performance difference to the traindingpairs
+    for asset in dict_roi_tp:
+        dict_roi_tp[asset] = [dict_roi_tp[asset], dict_roi_tp[collection] - dict_roi_tp[asset]]
+
+    df_roi = pd.DataFrame.from_dict(dict_roi_tp,orient='index',columns=["ROI", "performance against collection"])
+
+    return df_roi

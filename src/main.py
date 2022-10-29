@@ -104,11 +104,13 @@ def step_7():
 
 def step_8():
     """ 
-        Compare the returns on Investment. For NFT Collections we assume that one would invested on the close of the first traidingday.
+        Compare the returns on Investment. For NFT Collections we assume that one would invested
+        on the close of the first (or after a give delay) traidingday.
         For Tradingpairs we take the same date as the NFT Collection.
     """
 
-    f.calc_returns(collection="degods", traidingpairs=ALL_TRADINGPAIRS)
+    #f.calc_returns(collection="metamercs_by_metacreed", traidingpairs=["BTCUSDT", "SOLUSDT"], delay=0)
+    f.calc_returns(collection="metamercs_by_metacreed", traidingpairs=ALL_TRADINGPAIRS, delay=0)
 
 
 
