@@ -47,7 +47,7 @@ st.write(f"Shows the moving avg. of the dollar value of {collection}")
 x = st.slider('Moving average of:', min_value=5,max_value=50)
 
 try:
-    df = f.read_df_from_sql(table_name=collection)
+    df = f.read_df_from_sql(table_name=collection, is_collection=True)
 
     df["USD"] = df["cFP in Dollar"].rolling(window=x).mean() # MA 
     df["ts"] = df["ts"] / 1000

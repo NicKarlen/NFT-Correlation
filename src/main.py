@@ -33,8 +33,9 @@ def step_1(collections: list[str] = ALL_COLLECTIONS, special_DB_name : str = "da
 
             # Write DB
             f.write_df_to_sql(df=df_floorprice, table_name=collection, special_DB_name=special_DB_name, is_collection=True)
-        except:
+        except Exception as e:
             print(collection)
+            print(e)
         print(f"step_1 Nr: {idx}")
 
 def step_2(traidingpairs: list[str] = ALL_TRADINGPAIRS, special_DB_name : str = "database"):
@@ -159,9 +160,9 @@ if __name__ == "__main__":
     # step_0()
     # step_2()
     # get array of collection names sorted by volume
-    arr_top_collection = f.get_arr_collection_names()
-    step_1(collections=arr_top_collection)
-    step_3(collections=arr_top_collection)
+    # arr_top_collection = f.get_arr_collection_names()
+    # step_1(collections=arr_top_collection)
+    # step_3(collections=arr_top_collection)
 
     """
         test

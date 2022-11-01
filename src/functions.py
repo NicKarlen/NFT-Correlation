@@ -57,7 +57,7 @@ def get_collections() -> pd.DataFrame:
     # regular request with the python module "requests" does not work
     scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
-
+    
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(json.loads(res.text))
 
@@ -103,7 +103,7 @@ def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
     # regular request with the python module "requests" does not work
     scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
-
+    
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(json.loads(res.text))
     sleep(0.3)
