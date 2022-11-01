@@ -33,9 +33,9 @@ with st.sidebar:
     tradingpairs = st.multiselect(label='Traidingpairs', options=main.ALL_TRADINGPAIRS, default=["SOLUSDT"])
     if st.button("Collect & Prepare fresh data"):
         with st.spinner('Wait for it...'):
-            main.step_1(webvisu=True, input_collections=[collection])
-            main.step_2(webvisu=True, input_tradingpairs=tradingpairs)
-            main.step_3(webvisu=True, input_collections=[collection])
+            main.step_1(collections=[collection])
+            main.step_2(traidingpairs=tradingpairs)
+            main.step_3(collections=[collection])
         st.success('Done!')
  
 

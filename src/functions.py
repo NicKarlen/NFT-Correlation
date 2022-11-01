@@ -8,24 +8,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def read_df_from_sql(table_name: str) -> pd.DataFrame:
+def read_df_from_sql(table_name: str, special_DB_name : str = "database") -> pd.DataFrame:
     """
         Read a table in the database and return a pandas dataframe
     """
-    con = sqlite3.connect('data/database.db')
+    con = sqlite3.connect(f'data/{special_DB_name}.db')
     df = pd.read_sql_query(f"SELECT * FROM {table_name}", con)
     con.close()
 
     return df
 
-def write_df_to_sql(df: pd.DataFrame, table_name: str) -> None:
+def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "database") -> None:
     """
         Write a pandas DataFrame to the Database
     """
-    con = sqlite3.connect('data/database.db')
+    con = sqlite3.connect(f'data/{special_DB_name}.db')
     df.to_sql(name=table_name, con=con, if_exists="replace")
     con.close()
 
+def get_all_tables_from_DB():
+    # Making a connection 
+    sqliteConnection = sqlite3.connect('data/database.db')
+    # Getting all tables from sqlite_master
+    sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
+    # Creating cursor object using connection object
+    cursor = sqliteConnection.cursor()
+    # executing our sql query
+    cursor.execute(sql_query)   
+    # printing all tables list
+    print(cursor.fetchall())
 
 def get_collections() -> pd.DataFrame:
     """
@@ -43,6 +54,18 @@ def get_collections() -> pd.DataFrame:
     df = pd.DataFrame(json.loads(res.text))
 
     return df
+
+def get_arr_collection_names():
+    """
+        Return an array with all the collection-names from the top 1000 most popular collections from MagicEden
+    """
+    # get all the collections from the DB, order them by total Volume and create an array of collection names
+    df_top_collections = read_df_from_sql(table_name="Solana_Collections")
+    df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+    arr_top_collection = df_top_collections["collectionSymbol"].values
+
+    return arr_top_collection
+
 
 
 def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
@@ -353,10 +376,8 @@ def show_line_chart(amount: int) -> None:
         step4: We show the legend and show the chart
 
     """
-    # get all the collections from the DB, order them by total Volume and create an array of collection names
-    df_top_collections = read_df_from_sql(table_name="Solana_Collections")
-    df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
-    arr_top_collection = df_top_collections["collectionSymbol"].values
+    # get array of collection names sorted by volume
+    arr_top_collection = get_arr_collection_names()
 
 
     for idx, asset in enumerate(arr_top_collection[:amount]):
@@ -446,10 +467,8 @@ def prep_compare_all_returns() -> None:
 
         RUNTIME: ~10min
     """
-    # get all the collections from the DB, order them by total Volume and create an array of collection names
-    df_top_collections = read_df_from_sql(table_name="Solana_Collections")
-    df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
-    arr_top_collection = df_top_collections["collectionSymbol"].values
+    # get array of collection names sorted by volume
+    arr_top_collection = get_arr_collection_names()
 
     # For every collection we run the calc_returns function and create a new dictionary
     list_all_returns = []

@@ -12,62 +12,60 @@ ALL_TRADINGPAIRS = ["BTCUSDT", "SOLUSDT", "ETHUSDT"]
 
 
 
-def step_0():
+def step_0(special_DB_name : str = "database"):
     """
         Get the most popular Solana NFT Collections
     """
     df = f.get_collections()
 
-    f.write_df_to_sql(df=df,table_name="Solana_Collections")
+    f.write_df_to_sql(df=df,table_name="Solana_Collections", special_DB_name=special_DB_name)
 
 
-def step_1(webvisu: bool= False, input_collections: list[str] = []):
+def step_1(collections: list[str] = ALL_COLLECTIONS, special_DB_name : str = "database"):
     """
         Get the raw data from MagicEden (main site endpoint)
     """
-    if webvisu == True:
-        collections = input_collections
-    else:
-        collections = ALL_COLLECTIONS
 
-    for collection in collections:
-        # get floorprice
-        df_floorprice = f.get_floorPrice(collection=collection, resolution="1d")
+    for idx, collection in enumerate(collections):
+        try:
+            # get floorprice
+            df_floorprice = f.get_floorPrice(collection=collection, resolution="1d")
 
-        # Write DB
-        f.write_df_to_sql(df=df_floorprice, table_name=collection)
+            # Write DB
+            f.write_df_to_sql(df=df_floorprice, table_name=collection, special_DB_name=special_DB_name)
+        except:
+            print(collection)
+        print(f"step_1 Nr: {idx}")
 
-def step_2(webvisu: bool= False, input_tradingpairs: list[str] = []):
+def step_2(traidingpairs: list[str] = ALL_TRADINGPAIRS, special_DB_name : str = "database"):
     """
         Get the raw data for a Tradingpair from Binance
     """
-    if webvisu == True:
-        traidingpairs = input_tradingpairs
-    else:
-        traidingpairs = ALL_TRADINGPAIRS
 
     for tp in traidingpairs:
         # get candles
-        df_tradingpair_candles = f.get_tradingpair_candles(traidingpair=tp, start_datetime='1.1.2022 01:00:00', resolution="1d")
+        df_tradingpair_candles = f.get_tradingpair_candles(traidingpair=tp, start_datetime='1.1.2021 01:00:00', resolution="1d")
 
         # Write DB
-        f.write_df_to_sql(df=df_tradingpair_candles, table_name=tp)
+        f.write_df_to_sql(df=df_tradingpair_candles, table_name=tp, special_DB_name=special_DB_name)
 
-def step_3(webvisu: bool= False, input_collections: list[str] = []):
+def step_3(collections: list[str] = ALL_COLLECTIONS):
     """
         Prepare data 1: Calc dollar value for collections
     """
-    if webvisu == True:
-        collections = input_collections
-    else:
-        collections = ALL_COLLECTIONS
+    arr_collection_with_problem = []
+    for idx, collection in enumerate(collections):
+        try:
+            # calculate the dollar value for all collections (HINT can easily be looped over)
+            df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection=collection)
+            # Write DB
+            f.write_df_to_sql(df=df, table_name=collection)
+        except:
+            print(collection)
+            arr_collection_with_problem.append(collection)
+        print(f"step_3: Nr: {idx}")
 
-    for collection in collections:
-        # calculate the dollar value for all collections (HINT can easily be looped over)
-        df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection=collection)
-        # Write DB
-        f.write_df_to_sql(df=df, table_name=collection)
-
+    print(arr_collection_with_problem)
 
 def step_4():
     """
@@ -121,7 +119,7 @@ def step_9():
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
     # create data
-    #f.prep_compare_all_returns()
+    #f.prep_compare_all_returns() # -> runs for more than 5min
     # plot data$
     f.plot_compare_all_returns()
 
@@ -143,7 +141,28 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    step_9()
+    # step_9()
 
+    """
+        Collect raw data for all collections and tradingpairs (new DB)
+    """
+    # step_0(special_DB_name = "database_all_collections")
+    # df_top_collections = f.read_df_from_sql(table_name="Solana_Collections", special_DB_name = "database_all_collections")
+    # df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+    # arr_top_collection = df_top_collections["collectionSymbol"].values
+    # step_1(webvisu = True, input_collections=arr_top_collection, special_DB_name = "database_all_collections")
+    # step_2(special_DB_name = "database_all_collections")
+    """
+        Collect raw data
+    """
+    # get array of collection names sorted by volume
+    # arr_top_collection = f.get_arr_collection_names()
+    # step_1(collections=arr_top_collection)
+    # step_3(collections=arr_top_collection)
+
+    """
+        test
+    """
+    f.get_all_tables_from_DB()
 
     print("Finished programm ", datetime.now())
