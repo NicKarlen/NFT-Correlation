@@ -8,20 +8,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def read_df_from_sql(table_name: str, special_DB_name : str = "database") -> pd.DataFrame:
+def read_df_from_sql(table_name: str, special_DB_name : str = "database", is_collection: bool = False) -> pd.DataFrame:
     """
         Read a table in the database and return a pandas dataframe
     """
+    # change table name because there are some collection name that start with numbers
+    if is_collection == True:
+        table_name = f"nft_{table_name}"
+
     con = sqlite3.connect(f'data/{special_DB_name}.db')
     df = pd.read_sql_query(f"SELECT * FROM {table_name}", con)
     con.close()
 
     return df
 
-def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "database") -> None:
+def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "database", is_collection: bool = False) -> None:
     """
         Write a pandas DataFrame to the Database
     """
+    # change table name because there are some collection name that start with numbers
+    if is_collection == True:
+        table_name = f"nft_{table_name}"
+
     con = sqlite3.connect(f'data/{special_DB_name}.db')
     df.to_sql(name=table_name, con=con, if_exists="replace")
     con.close()
@@ -200,7 +208,7 @@ def calc_dollar_value_of_collection(tradingpair: str, collection: str = None, df
     """
     # Read DB
     if df_direct.empty:
-        df_collection = read_df_from_sql(table_name=collection)
+        df_collection = read_df_from_sql(table_name=collection, is_collection=True)
     else:
         df_collection = df_direct
 
@@ -263,7 +271,7 @@ def create_single_table(tradingpairs: list[str], collections: list[str]) -> pd.D
     df_arr_collections = []
     for collection in collections:
         # read from DB
-        df = read_df_from_sql(table_name=collection)
+        df = read_df_from_sql(table_name=collection, is_collection=True)
         # drop all unneeded columns
         df.drop(["index","cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV"], axis=1, inplace=True)
         df.set_index("level_0", inplace=True)
@@ -412,7 +420,7 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
     """
     # If the collection exists in the database will take that, else we fetch it via API
     try:
-        df_collection = read_df_from_sql(table_name=collection)
+        df_collection = read_df_from_sql(table_name=collection, is_collection=True)
     except:
         df_collection = get_floorPrice(collection=collection, resolution="1d")
         df_collection = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df_collection)

@@ -32,7 +32,7 @@ def step_1(collections: list[str] = ALL_COLLECTIONS, special_DB_name : str = "da
             df_floorprice = f.get_floorPrice(collection=collection, resolution="1d")
 
             # Write DB
-            f.write_df_to_sql(df=df_floorprice, table_name=collection, special_DB_name=special_DB_name)
+            f.write_df_to_sql(df=df_floorprice, table_name=collection, special_DB_name=special_DB_name, is_collection=True)
         except:
             print(collection)
         print(f"step_1 Nr: {idx}")
@@ -59,9 +59,10 @@ def step_3(collections: list[str] = ALL_COLLECTIONS):
             # calculate the dollar value for all collections (HINT can easily be looped over)
             df = f.calc_dollar_value_of_collection(tradingpair="SOLUSDT", collection=collection)
             # Write DB
-            f.write_df_to_sql(df=df, table_name=collection)
-        except:
+            f.write_df_to_sql(df=df, table_name=collection, is_collection=True)
+        except Exception as e:
             print(collection)
+            print(e)
             arr_collection_with_problem.append(collection)
         print(f"step_3: Nr: {idx}")
 
@@ -155,14 +156,16 @@ if __name__ == "__main__":
     """
         Collect raw data
     """
+    # step_0()
+    # step_2()
     # get array of collection names sorted by volume
-    # arr_top_collection = f.get_arr_collection_names()
-    # step_1(collections=arr_top_collection)
-    # step_3(collections=arr_top_collection)
+    arr_top_collection = f.get_arr_collection_names()
+    step_1(collections=arr_top_collection)
+    step_3(collections=arr_top_collection)
 
     """
         test
     """
-    f.get_all_tables_from_DB()
+    #step_3(collections=["3d_anon"])
 
     print("Finished programm ", datetime.now())
