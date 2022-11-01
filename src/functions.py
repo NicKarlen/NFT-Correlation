@@ -1,4 +1,3 @@
-from os import read
 from time import sleep
 import requests, json, sqlite3
 import cloudscraper
@@ -103,7 +102,7 @@ def get_floorPrice(collection: str, resolution: str) -> pd.DataFrame:
     # regular request with the python module "requests" does not work
     scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
-    
+
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(json.loads(res.text))
     sleep(0.3)
@@ -525,3 +524,49 @@ def plot_compare_all_returns() -> None:
 
     plt.show()
 
+
+def get_traidingdays_per_nft():
+
+    arr_all_collections = get_arr_collection_names()
+    dict_traidingdays = {}
+    for idx, coll in enumerate(arr_all_collections):
+        try:
+            df = read_df_from_sql(table_name=coll, is_collection=True)
+        except Exception as e:
+            print(e)
+        dict_traidingdays[coll] = {"number_of_tradingdays": df.shape[0],
+                                    "more_than_50": df.shape[0] > 50,
+                                    "more_than_100": df.shape[0] > 100,
+                                    "more_than_150": df.shape[0] > 150,
+                                    "more_than_200": df.shape[0] > 200,
+                                    "more_than_250": df.shape[0] > 250}
+    
+    with open('data/length_nft.json', 'w', encoding='utf-8') as f:
+        json.dump(dict_traidingdays, f, ensure_ascii=False, indent=4)
+
+    sums = {
+        "more_than_50": 0,
+        "more_than_100": 0,
+        "more_than_150": 0,
+        "more_than_200": 0,
+        "more_than_250": 0,
+        "max": 0,
+        "min": 99999
+    }
+    for key, value in dict_traidingdays.items():
+        if value["more_than_50"] == True:
+            sums["more_than_50"] += 1
+        if value["more_than_100"] == True:
+            sums["more_than_100"] += 1
+        if value["more_than_150"] == True:
+            sums["more_than_150"] += 1
+        if value["more_than_200"] == True:
+            sums["more_than_200"] += 1
+        if value["more_than_250"] == True:
+            sums["more_than_250"] += 1
+        if value["number_of_tradingdays"] > sums["max"]: 
+            sums["max"] = value["number_of_tradingdays"]
+        if value["number_of_tradingdays"] < sums["min"]: 
+            sums["min"] = value["number_of_tradingdays"]
+
+    print(sums)

@@ -168,5 +168,5 @@ if __name__ == "__main__":
         test
     """
     #step_3(collections=["3d_anon"])
-
+    f.get_traidingdays_per_nft()
     print("Finished programm ", datetime.now())
