@@ -33,7 +33,7 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "
     df.to_sql(name=table_name, con=con, if_exists="replace")
     con.close()
 
-def get_all_tables_from_DB():
+def get_all_collection_names_from_DB():
     # Making a connection 
     sqliteConnection = sqlite3.connect('data/database.db')
     # Getting all tables from sqlite_master
@@ -43,7 +43,13 @@ def get_all_tables_from_DB():
     # executing our sql query
     cursor.execute(sql_query)   
     # printing all tables list
-    print(cursor.fetchall())
+    tuple_db_table = cursor.fetchall()
+    arr_saved_collections = []
+    for table in tuple_db_table:
+        if table[0][:3] == "nft":
+            arr_saved_collections.append(table[0][4:])
+    
+    return arr_saved_collections
 
 def get_collections() -> pd.DataFrame:
     """
@@ -475,7 +481,7 @@ def prep_compare_all_returns() -> None:
         RUNTIME: ~10min
     """
     # get array of collection names sorted by volume
-    arr_top_collection = get_arr_collection_names()
+    arr_top_collection = get_all_collection_names_from_DB()
 
     # For every collection we run the calc_returns function and create a new dictionary
     list_all_returns = []
@@ -498,6 +504,9 @@ def plot_compare_all_returns() -> None:
     """
     # Read data from DB
     df_returns = read_df_from_sql(table_name="Collection_all_returns")
+    # drop null values
+    df_returns.dropna(inplace=True)
+
     # Create the bins and labels for the .cut function.
     # This is a categorization of the data
     arr_bins    = [-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100,200,300,400,500,1000,2000,3000,4000,5000,10000,np.inf]

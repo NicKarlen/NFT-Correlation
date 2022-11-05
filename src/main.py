@@ -121,8 +121,8 @@ def step_9():
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
     # create data
-    #f.prep_compare_all_returns() # -> runs for more than 5min
-    # plot data$
+    # f.prep_compare_all_returns() # -> runs for more than 1min
+    # plot data
     f.plot_compare_all_returns()
 
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    # step_9()
+    step_9()
 
     """
         Collect raw data for all collections and tradingpairs (new DB)
@@ -167,6 +167,6 @@ if __name__ == "__main__":
     """
         test
     """
-    #step_3(collections=["3d_anon"])
-    f.get_traidingdays_per_nft()
+    # step_3(collections=["3d_anon"])
+    # f.get_all_collection_names_from_DB()
     print("Finished programm ", datetime.now())
