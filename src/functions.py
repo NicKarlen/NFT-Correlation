@@ -34,21 +34,22 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "
     con.close()
 
 def get_all_collection_names_from_DB():
-    # Making a connection 
+    # Making a connection
     sqliteConnection = sqlite3.connect('data/database.db')
     # Getting all tables from sqlite_master
     sql_query = "SELECT name FROM sqlite_master WHERE type='table';"
     # Creating cursor object using connection object
     cursor = sqliteConnection.cursor()
     # executing our sql query
-    cursor.execute(sql_query)   
+    cursor.execute(sql_query)
     # printing all tables list
     tuple_db_table = cursor.fetchall()
     arr_saved_collections = []
     for table in tuple_db_table:
         if table[0][:3] == "nft":
             arr_saved_collections.append(table[0][4:])
-    
+
+    arr_saved_collections.sort()
     return arr_saved_collections
 
 def get_collections() -> pd.DataFrame:
@@ -62,7 +63,7 @@ def get_collections() -> pd.DataFrame:
     # regular request with the python module "requests" does not work
     scraper = cloudscraper.create_scraper()
     res = scraper.get(url)
-    
+
     # Create a Dataframe from a dictionary
     df = pd.DataFrame(json.loads(res.text))
 
@@ -431,7 +432,7 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
         df_collection = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df_collection)
 
     # Drop the first and last row of the collection data, because the first and last row are no full days
-    # and we can therefore not fine the timestamp in the tradingpairs data
+    # and we can therefore not find the timestamp in the tradingpairs data
     df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
     df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
     # Get first and last row of the adjusted dataframe
@@ -536,7 +537,7 @@ def plot_compare_all_returns() -> None:
 
 def get_traidingdays_per_nft():
 
-    arr_all_collections = get_arr_collection_names()
+    arr_all_collections = get_all_collection_names_from_DB()
     dict_traidingdays = {}
     for idx, coll in enumerate(arr_all_collections):
         try:
@@ -549,7 +550,7 @@ def get_traidingdays_per_nft():
                                     "more_than_150": df.shape[0] > 150,
                                     "more_than_200": df.shape[0] > 200,
                                     "more_than_250": df.shape[0] > 250}
-    
+
     with open('data/length_nft.json', 'w', encoding='utf-8') as f:
         json.dump(dict_traidingdays, f, ensure_ascii=False, indent=4)
 
@@ -562,6 +563,7 @@ def get_traidingdays_per_nft():
         "max": 0,
         "min": 99999
     }
+    arr_coll_250Plus = []
     for key, value in dict_traidingdays.items():
         if value["more_than_50"] == True:
             sums["more_than_50"] += 1
@@ -573,9 +575,59 @@ def get_traidingdays_per_nft():
             sums["more_than_200"] += 1
         if value["more_than_250"] == True:
             sums["more_than_250"] += 1
-        if value["number_of_tradingdays"] > sums["max"]: 
+            arr_coll_250Plus.append(key)
+        if value["number_of_tradingdays"] > sums["max"]:
             sums["max"] = value["number_of_tradingdays"]
-        if value["number_of_tradingdays"] < sums["min"]: 
+        if value["number_of_tradingdays"] < sums["min"]:
             sums["min"] = value["number_of_tradingdays"]
 
     print(sums)
+
+    return arr_coll_250Plus, dict_traidingdays
+
+
+def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timestamp: int = 0) -> pd.DataFrame:
+    """
+        ROI = (Current value of Investment - Cost of Investment) / Cost of Investment
+    """
+    # get rid of the two columns if they exist
+    if "level_0" in df_collection.columns:
+        df_collection.drop(columns=["level_0"], inplace=True)
+    if "index" in df_collection.columns:
+        df_collection.drop(columns=["index"], inplace=True)
+
+    if "perc return" not in df_collection.columns:
+        # if the collection was traiding for less than 4 days we cannot make the return calculation
+        if df_collection.shape[0] < 4:
+            return df_collection
+        # Drop first and last row since we do not have a dollar
+        # price because the timestamp did not match the dailyclose price when calc the dollarvalue
+        df_collection.drop(df_collection.head(1).index,inplace=True) # drop first row
+        df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last row
+
+
+    # read the first price on the first row
+    if start_timestamp == 0:
+        start_price = df_collection.iloc[0]["cFP in Dollar"]
+
+        # add a row with the % return starting at the first day
+        df_collection["perc return"] = 0
+        df_collection["perc return"] = (df_collection["cFP in Dollar"] - start_price) / start_price * 100
+    else:
+        start_price = df_collection.loc[df_collection["ts"] == start_timestamp]["cFP in Dollar"].values[0]
+        print(start_price)
+        # add a row with the % return starting at the first day
+        df_collection[f"perc return {int(start_timestamp)}"] = 0
+        df_collection[f"perc return {int(start_timestamp)}"] = (df_collection["cFP in Dollar"] - start_price) / start_price * 100
+        def set_zero(row):
+            if row["ts"] < start_timestamp:
+                row[f"perc return {int(start_timestamp)}"] = 0
+            return row
+        df_collection = df_collection.apply(set_zero, axis=1)
+
+
+    return df_collection
+
+
+def calc_daily_returns_for_tradingpair(starting_timestamp: str):
+    pass

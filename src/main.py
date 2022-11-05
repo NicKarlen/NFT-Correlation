@@ -121,9 +121,52 @@ def step_9():
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
     # create data
-    # f.prep_compare_all_returns() # -> runs for more than 1min
+    f.prep_compare_all_returns() # -> runs for more than 1min
     # plot data
     f.plot_compare_all_returns()
+
+
+def step_10():
+    """
+        get the collections with more than 250 traidingdays and the starting timestamp
+        of the collection with just above 250 tradingdays.
+    """  
+    arr_coll_250days, dict_tradingdays = f.get_traidingdays_per_nft()
+    arr_shape = []
+    for i in arr_coll_250days:
+        arr_shape.append(dict_tradingdays[i]["number_of_tradingdays"])
+
+    arr_shape.sort()
+
+    for key, value in dict_tradingdays.items():
+        if value["number_of_tradingdays"] == arr_shape[0]:
+            df = f.read_df_from_sql(table_name=key, is_collection=True)
+            starting_timestamp = df.loc[0]["ts"]
+            break
+
+    print(starting_timestamp)
+
+    return starting_timestamp, arr_coll_250days
+
+def step_11(input_collections: list[str] = None, start_timestamp: int = 0):
+    """
+        calc returns for all collections and same in collection table
+    """
+    if input_collections == None:
+        arr_collections = f.get_all_collection_names_from_DB()
+    else:
+        arr_collections = input_collections
+
+    for idx, coll in enumerate(arr_collections):
+        print(idx, coll)
+        df_coll = f.read_df_from_sql(table_name=coll, is_collection=True)
+        if start_timestamp == 0:
+            df_coll = f.calc_daily_returns_for_collections(df_collection=df_coll)
+        else:
+            df_coll = f.calc_daily_returns_for_collections(df_collection=df_coll, start_timestamp=start_timestamp)
+        f.write_df_to_sql(df=df_coll,table_name=coll, is_collection=True)
+        break
+
 
 
 
@@ -143,7 +186,9 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    step_9()
+    # step_9()
+    st, colls = step_10()
+    step_11(input_collections=colls, start_timestamp=st)
 
     """
         Collect raw data for all collections and tradingpairs (new DB)
@@ -159,14 +204,13 @@ if __name__ == "__main__":
     """
     # step_0()
     # step_2()
-    # get array of collection names sorted by volume
-    # arr_top_collection = f.get_arr_collection_names()
+    # #get array of collection names sorted by volume
+    # arr_top_collection = f.get_all_collection_names_from_DB()
     # step_1(collections=arr_top_collection)
     # step_3(collections=arr_top_collection)
 
     """
         test
     """
-    # step_3(collections=["3d_anon"])
-    # f.get_all_collection_names_from_DB()
+
     print("Finished programm ", datetime.now())
