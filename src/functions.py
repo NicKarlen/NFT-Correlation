@@ -588,6 +588,10 @@ def get_traidingdays_per_nft():
 
 def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timestamp: int = 0) -> pd.DataFrame:
     """
+        Get the daily returns of a collection scaled to a given startingdate. 
+
+        If no date is given we calculate the daily-returns from day one.
+
         ROI = (Current value of Investment - Cost of Investment) / Cost of Investment
     """
     # get rid of the two columns if they exist
@@ -615,7 +619,6 @@ def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timest
         df_collection["perc return"] = (df_collection["cFP in Dollar"] - start_price) / start_price * 100
     else:
         start_price = df_collection.loc[df_collection["ts"] == start_timestamp]["cFP in Dollar"].values[0]
-        print(start_price)
         # add a row with the % return starting at the first day
         df_collection[f"perc return {int(start_timestamp)}"] = 0
         df_collection[f"perc return {int(start_timestamp)}"] = (df_collection["cFP in Dollar"] - start_price) / start_price * 100
@@ -629,5 +632,66 @@ def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timest
     return df_collection
 
 
-def calc_daily_returns_for_tradingpair(starting_timestamp: str):
-    pass
+def calc_daily_returns_for_tradingpair(df_traidingpair: pd.DataFrame, start_timestamp: int = 0) -> pd.DataFrame:
+    """
+        Get the daily returns of a traidingpair scaled to a given startingdate. 
+
+        If no date is given we calculate the daily-returns from day one.
+    """
+    df_traidingpair["Close price"] = pd.to_numeric(df_traidingpair["Close price"])
+
+    if start_timestamp == 0:
+        start_price = df_traidingpair.iloc[0]["Close price"]
+
+        df_traidingpair["perc return"] = 0
+        df_traidingpair["perc return"] = (df_traidingpair["Close price"] - start_price) / start_price * 100
+
+    else:
+        start_price = df_traidingpair.loc[df_traidingpair["Kline Close time"] == start_timestamp-1]["Close price"].values[0]
+
+        # add a row with the % return starting at the first day
+        df_traidingpair[f"perc return {int(start_timestamp)}"] = 0
+        df_traidingpair[f"perc return {int(start_timestamp)}"] = (df_traidingpair["Close price"] - start_price) / start_price * 100
+        def set_zero(row):
+            if row["Kline Close time"] < start_timestamp:
+                row[f"perc return {int(start_timestamp)}"] = 0
+            return row
+        df_traidingpair = df_traidingpair.apply(set_zero, axis=1)
+
+    return df_traidingpair
+
+
+def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
+    """
+        function to create a merged dataframe with all collections daily returns and calc a daily simpel avg.
+
+        similar to function "create_single_table"
+    """
+
+    for idx, collection in enumerate(collections):
+        # read from DB
+        df = read_df_from_sql(table_name=collection, is_collection=True)
+        # drop all unneeded columns
+        df.drop(["index","cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV","cFP in Dollar", "perc return"], axis=1, inplace=True)
+
+        if idx == 0:
+            df_merged = df
+            df_merged.columns = ["ts", collection]
+            df_merged = df_merged[df_merged["ts"] >= start_timestamp].reset_index()
+            continue
+        
+        df_merged = pd.concat([df_merged.set_index('ts'),df.set_index('ts')], axis=1, join='inner').reset_index()
+        # get rid of the two columns if they exist
+        if "level_0" in df_merged.columns:
+            df_merged.drop(columns=["level_0"], inplace=True)
+        if "index" in df_merged.columns:
+            df_merged.drop(columns=["index"], inplace=True)
+        df_merged.columns = [*df_merged.columns[:-1], collection]
+
+
+    names = [*df_merged.columns[1:]]
+    df_merged["avg"] = df_merged[names].mean(axis=1)
+
+    print(df_merged)
+
+    return df_merged

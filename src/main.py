@@ -126,6 +126,12 @@ def step_9():
     f.plot_compare_all_returns()
 
 
+"""
+--------------------------------------------------------------------------
+                        NFT-Price-Index (01.11.2022)
+
+"""
+
 def step_10():
     """
         get the collections with more than 250 traidingdays and the starting timestamp
@@ -150,7 +156,7 @@ def step_10():
 
 def step_11(input_collections: list[str] = None, start_timestamp: int = 0):
     """
-        calc returns for all collections and same in collection table
+        calc daily returns for all collections starting at the beginning or the start_timestamp.
     """
     if input_collections == None:
         arr_collections = f.get_all_collection_names_from_DB()
@@ -165,8 +171,24 @@ def step_11(input_collections: list[str] = None, start_timestamp: int = 0):
         else:
             df_coll = f.calc_daily_returns_for_collections(df_collection=df_coll, start_timestamp=start_timestamp)
         f.write_df_to_sql(df=df_coll,table_name=coll, is_collection=True)
-        break
 
+
+def step_12(start_timestamp: int = 0):
+    """
+        calc daily returns for all traidingpairs starting at the beginning or the start_timestamp.
+    """
+
+    df_tp = f.read_df_from_sql(table_name="BTCUSDT")
+    df_tp = f.calc_daily_returns_for_tradingpair(df_traidingpair=df_tp,start_timestamp=start_timestamp)
+    f.write_df_to_sql(df=df_tp,table_name="BTCUSDT")
+    
+def step_13(input_collections: list[str] = ["degods", "galactic_geckos"], start_timestamp: int = 0):
+    """
+        creat one dataframe with the collections that are older than 250 days and the to be compared traidingpair.
+    """
+    df_nft_price_index = f.create_NFT_Price_Index(collections = input_collections, start_timestamp = start_timestamp)
+
+    f.write_df_to_sql(df=df_nft_price_index, table_name="NFT Price Index")
 
 
 
@@ -188,7 +210,10 @@ if __name__ == "__main__":
     # step_8()
     # step_9()
     st, colls = step_10()
-    step_11(input_collections=colls, start_timestamp=st)
+    #step_11(input_collections=colls, start_timestamp=st)
+    # step_12(start_timestamp=st)
+    step_13(input_collections = colls, start_timestamp=st)
+
 
     """
         Collect raw data for all collections and tradingpairs (new DB)
