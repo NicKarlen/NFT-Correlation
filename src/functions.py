@@ -681,12 +681,10 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
             df_merged = df_merged[df_merged["ts"] >= start_timestamp].reset_index()
             continue
         
-        df_merged = pd.concat([df_merged.set_index('ts'),df.set_index('ts')], axis=1, join='inner').reset_index()
-        # get rid of the two columns if they exist
+        df_merged = pd.concat([df_merged.set_index('ts'),df.set_index('ts')], axis=1, join='inner').reset_index(drop=True)
+        # get rid of the column if it exist
         if "level_0" in df_merged.columns:
             df_merged.drop(columns=["level_0"], inplace=True)
-        if "index" in df_merged.columns:
-            df_merged.drop(columns=["index"], inplace=True)
         # Rename the columns
         df_merged.columns = [*df_merged.columns[:-1], collection]
 
