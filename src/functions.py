@@ -638,14 +638,15 @@ def calc_daily_returns_for_tradingpair(df_traidingpair: pd.DataFrame, start_time
 
         If no date is given we calculate the daily-returns from day one.
     """
+    # Change the values in the Close price column to numeric values
     df_traidingpair["Close price"] = pd.to_numeric(df_traidingpair["Close price"])
-
+    # if no start time is given, calc the returns from the beginning on
     if start_timestamp == 0:
         start_price = df_traidingpair.iloc[0]["Close price"]
 
         df_traidingpair["perc return"] = 0
         df_traidingpair["perc return"] = (df_traidingpair["Close price"] - start_price) / start_price * 100
-
+    # if a start time is given the calc the returns starting at the timestamp
     else:
         start_price = df_traidingpair.loc[df_traidingpair["Kline Close time"] == start_timestamp-1]["Close price"].values[0]
 
@@ -667,13 +668,13 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
 
         similar to function "create_single_table"
     """
-
+    # Concat all the collections %-returns
     for idx, collection in enumerate(collections):
         # read from DB
         df = read_df_from_sql(table_name=collection, is_collection=True)
         # drop all unneeded columns
         df.drop(["index","cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV","cFP in Dollar", "perc return"], axis=1, inplace=True)
-
+        # if first collection then create the dataframe df_merged
         if idx == 0:
             df_merged = df
             df_merged.columns = ["ts", collection]
@@ -686,13 +687,12 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
             df_merged.drop(columns=["level_0"], inplace=True)
         if "index" in df_merged.columns:
             df_merged.drop(columns=["index"], inplace=True)
+        # Rename the columns
         df_merged.columns = [*df_merged.columns[:-1], collection]
 
-
+    # make a simple avg over all columns expect the first
     names = [*df_merged.columns[1:]]
     df_merged["avg"] = df_merged[names].mean(axis=1)
-
-    print(df_merged)
 
     return df_merged
 
@@ -700,41 +700,37 @@ def plot_NFT_Price_Index(df_traidingpair: pd.DataFrame) -> None:
     """
         Plot a line chart with the nft price index and a traidingpair (like BTC/USDT)
     """
-
+    # Adjust the timestamp of the traidingpair so that we can concat it later with the one from the collection
     df_traidingpair["Kline Close time"] = df_traidingpair["Kline Close time"] +1
-
+    # Read the nft price index from db
     df_nft_price_index = read_df_from_sql(table_name="`NFT Price Index`")
-
+    # Only take the rows where the timestamp of the traidingpair-rows are bigger/equal to the first timestamp in the nft_price_index
     df_traidingpair = df_traidingpair[df_traidingpair["Kline Close time"] >= df_nft_price_index.loc[0,"ts"]]
 
-    # Correlation
+    # get rid of the two columns if they exist
     if "level_0" in df_traidingpair.columns:
         df_traidingpair.drop(columns=["level_0"], inplace=True)
     if "index" in df_traidingpair.columns:
         df_traidingpair.drop(columns=["index"], inplace=True)
-
-    df_traidingpair.reset_index(inplace=True)
+    # clean up and concat the nft price index and tradingpair returns for correlation calculation
+    df_traidingpair.reset_index(inplace=True, drop=True)
     df_nft_price_index.reset_index(inplace=True)
-    df = pd.concat([df_nft_price_index["avg"], df_traidingpair[df_traidingpair.columns[-1]]], axis=1, ).reset_index()
-
+    df = pd.concat([df_nft_price_index["avg"], df_traidingpair[df_traidingpair.columns[-1]]], axis=1).reset_index(drop=True)
     df.drop(df.tail(7).index,inplace=True) # drop last row
-
-    if "index" in df.columns:
-        df.drop(columns=["index"], inplace=True)
-
+    # Correlation calc
     correlation = df.corr(method="pearson").iloc[1,0].round(3)
-
+    # Adjust timestamps for the plot
     df_nft_price_index["ts"] = df_nft_price_index["ts"] / 1000
     df_nft_price_index["ts"] = df_nft_price_index["ts"].apply(datetime.fromtimestamp)
     df_traidingpair["Kline Close time"] = df_traidingpair["Kline Close time"] / 1000
     df_traidingpair["Kline Close time"] = df_traidingpair["Kline Close time"].apply(datetime.fromtimestamp)
-
+    # Create a figure and axes to plot on
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True)
-
+    # plot the nft price index
     df_nft_price_index.plot(kind='line', x="ts", y="avg",ax=axes, xlabel='timestamp', ylabel="Perc Return", legend=True)
-
+    # plot the traidingpair returns
     df_traidingpair.plot(kind='line', x="Kline Close time", y=df_traidingpair.columns[-1], ax=axes, xlabel='Timestamp',  legend=True)
-
+    # adjust plot and show it
     axes.legend(['NFT Price Index', 'BTC/USDT'])
     fig.suptitle(f"NFT Price Index aus 200 Solana NFT-Kollektionen.\nKorrelation liegt bei {correlation}")
     plt.grid(True)
