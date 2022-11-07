@@ -191,6 +191,13 @@ def step_13(input_collections: list[str] = ["degods", "galactic_geckos"], start_
     f.write_df_to_sql(df=df_nft_price_index, table_name="NFT Price Index")
 
 
+def step_14():
+    """
+        plot NFT-Price-Index and Bitcoin chart
+    """
+    df_btc = f.read_df_from_sql(table_name="BTCUSDT")
+    f.plot_NFT_Price_Index(df_traidingpair=df_btc)
+
 
 
 if __name__ == "__main__":
@@ -209,11 +216,11 @@ if __name__ == "__main__":
     # step_7()
     # step_8()
     # step_9()
-    st, colls = step_10()
-    #step_11(input_collections=colls, start_timestamp=st)
+    # st, colls = step_10()
+    # step_11(input_collections=colls, start_timestamp=st)
     # step_12(start_timestamp=st)
-    step_13(input_collections = colls, start_timestamp=st)
-
+    # step_13(input_collections = colls, start_timestamp=st)
+    step_14()
 
     """
         Collect raw data for all collections and tradingpairs (new DB)
