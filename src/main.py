@@ -121,7 +121,7 @@ def step_9():
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
     # create data
-    f.prep_compare_all_returns() # -> runs for more than 1min
+    # f.prep_compare_all_returns() # -> runs for more than 1min
     # plot data
     f.plot_compare_all_returns()
 
@@ -215,12 +215,12 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    # step_9()
+    step_9()
     # st, colls = step_10()
     # step_11(input_collections=colls, start_timestamp=st)
     # step_12(start_timestamp=st)
     # step_13(input_collections = colls, start_timestamp=st)
-    step_14()
+    # step_14()
 
     """
         Collect raw data for all collections and tradingpairs (new DB)

@@ -427,14 +427,17 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
     # If the collection exists in the database will take that, else we fetch it via API
     try:
         df_collection = read_df_from_sql(table_name=collection, is_collection=True)
-    except:
+    except Exception as e:
+        print(e)
+        print("could not find collection in DB, collection name: ", collection)
         df_collection = get_floorPrice(collection=collection, resolution="1d")
         df_collection = calc_dollar_value_of_collection(tradingpair="SOLUSDT",  df_direct=df_collection)
 
     # Drop the first and last row of the collection data, because the first and last row are no full days
     # and we can therefore not find the timestamp in the tradingpairs data
-    df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
-    df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
+    if return_dict == False:
+        df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
+        df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
     # Get first and last row of the adjusted dataframe
     collection_first_row = df_collection.iloc[0]
     collection_last_row = df_collection.iloc[-1]
@@ -446,13 +449,14 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
     for tp in traidingpairs:
         df_tp = read_df_from_sql(table_name=tp)
         # search for the row with the same timestamp as the one from the collection
-        tp_first_row = df_tp[df_tp["Kline Close time"] == collection_first_row["ts"]-1 ].reset_index()
-        tp_last_row = df_tp[df_tp["Kline Close time"] == collection_last_row["ts"]-1 ].reset_index()
+        tp_first_row = df_tp[df_tp["Kline Close time"] == collection_first_row["ts"]-1 ].reset_index(drop=True)
+        tp_last_row = df_tp[df_tp["Kline Close time"] == collection_last_row["ts"]-1 ].reset_index(drop=True)
 
         # If we get data from the API that makes problems we just print out the collection name for later investigations
         try:
             dict_roi_tp[tp] = (float(tp_last_row.loc[0,"Close price"]) - float(tp_first_row.loc[0,"Close price"])) / float(tp_first_row.loc[0,"Close price"]) * 100
-        except:
+        except Exception as e:
+            print(e)
             print(tp_first_row)
             print(tp_last_row)
 
@@ -489,8 +493,8 @@ def prep_compare_all_returns() -> None:
     for idx, coll in enumerate(arr_top_collection):
         try:
             list_all_returns.append(calc_returns(collection=coll, traidingpairs=["BTCUSDT"], return_dict=True))
-        except:
-            print(coll)
+        except Exception as e:
+            print(e, f"collection name: {coll}")
 
     # Create a Dataframe from the collected data
     df_all_returns = pd.DataFrame.from_dict(list_all_returns)
@@ -528,10 +532,13 @@ def plot_compare_all_returns() -> None:
 
     # plot two bar charts
     fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
-    distribution_collection_ROI.plot.bar(ax=axes[0],ylabel='Count of Collections', xlabel="ROI % Groups")
-    distribution_Compare.plot.bar(ax=axes[1],ylabel='Count of Collections', xlabel="ROI % Groups")
-    fig.suptitle("Oben der ROI von den Kollektionen\nUnten der ROI im Vergleich zu Bitcoin (über die jeweilige Lebensdauer der Kollektion)")
-
+    distribution_collection_ROI.plot.bar(ax=axes[0],ylabel='Count of Collections', xlabel="%-Return Gruppen")
+    distribution_Compare.plot.bar(ax=axes[1],ylabel='Count of Collections', xlabel="%-Return Gruppen", color="orange")
+    
+    axes[0].title.set_text('%-Return über die gesamte Lebensdauer der Kollektionen in USD')
+    axes[1].title.set_text('%-Return über die gesamte Lebensdauer der Kollektionen in Bitcoin')
+    # axes[0].grid(True,linewidth=1)
+    # axes[1].grid(True)
     plt.show()
 
 
