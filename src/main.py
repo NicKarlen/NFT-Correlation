@@ -25,7 +25,7 @@ def step_1(collections: list[str] = ALL_COLLECTIONS, special_DB_name : str = "da
     """
         Get the raw data from MagicEden (main site endpoint)
     """
-
+    arr_collection_with_problem = []
     for idx, collection in enumerate(collections):
         try:
             # get floorprice
@@ -36,7 +36,10 @@ def step_1(collections: list[str] = ALL_COLLECTIONS, special_DB_name : str = "da
         except Exception as e:
             print(collection)
             print(e)
+            arr_collection_with_problem.append(collection)
         print(f"step_1 Nr: {idx}")
+
+    print(arr_collection_with_problem)
 
 def step_2(traidingpairs: list[str] = ALL_TRADINGPAIRS, special_DB_name : str = "database"):
     """
@@ -134,12 +137,12 @@ def step_9():
 
 def step_10():
     """
-        get the collections with more than 250 traidingdays and the starting timestamp
-        of the collection with just above 250 tradingdays.
+        get the collections with more than 320 traidingdays and the starting timestamp
+        of the collection with just above 320 tradingdays.
     """  
-    arr_coll_250days, dict_tradingdays = f.get_traidingdays_per_nft()
+    arr_coll_320days, dict_tradingdays = f.get_traidingdays_per_nft()
     arr_shape = []
-    for i in arr_coll_250days:
+    for i in arr_coll_320days:
         arr_shape.append(dict_tradingdays[i]["number_of_tradingdays"])
 
     arr_shape.sort()
@@ -147,12 +150,12 @@ def step_10():
     for key, value in dict_tradingdays.items():
         if value["number_of_tradingdays"] == arr_shape[0]:
             df = f.read_df_from_sql(table_name=key, is_collection=True)
-            starting_timestamp = df.loc[0]["ts"]
+            starting_timestamp = df.loc[1]["ts"]
             break
 
     print(starting_timestamp)
 
-    return starting_timestamp, arr_coll_250days
+    return starting_timestamp, arr_coll_320days
 
 def step_11(input_collections: list[str] = None, start_timestamp: int = 0):
     """
@@ -215,12 +218,15 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    step_9()
-    # st, colls = step_10()
-    # step_11(input_collections=colls, start_timestamp=st)
-    # step_12(start_timestamp=st)
-    # step_13(input_collections = colls, start_timestamp=st)
-    # step_14()
+    # step_9()
+    """
+        Delete DB before running it...
+    """
+    st, colls = step_10()
+    step_11(input_collections=colls, start_timestamp=st)
+    step_12(start_timestamp=st)
+    step_13(input_collections = colls, start_timestamp=st)
+    step_14()
 
     """
         Collect raw data for all collections and tradingpairs (new DB)
@@ -233,12 +239,21 @@ if __name__ == "__main__":
     # step_2(special_DB_name = "database_all_collections")
     """
         Collect raw data
+        HINT: DELETE DB BEFORE RUNNING!!!
     """
     # step_0()
     # step_2()
-    # #get array of collection names sorted by volume
-    # arr_top_collection = f.get_all_collection_names_from_DB()
+
+    # # get array of collection names from newly downloaded collections
+    # df_top_collections = f.read_df_from_sql(table_name="Solana_Collections")
+    # df_top_collections.sort_values(by="totalVol", ascending=False,inplace=True)
+    # arr_top_collection = df_top_collections["collectionSymbol"].values
+
     # step_1(collections=arr_top_collection)
+
+    # # get array of collection names sorted by volume FROM DB
+    # arr_top_collection = f.get_all_collection_names_from_DB()
+
     # step_3(collections=arr_top_collection)
 
     """

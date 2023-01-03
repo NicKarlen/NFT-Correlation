@@ -30,7 +30,7 @@ def write_df_to_sql(df: pd.DataFrame, table_name: str, special_DB_name : str = "
         table_name = f"nft_{table_name}"
 
     con = sqlite3.connect(f'data/{special_DB_name}.db')
-    df.to_sql(name=table_name, con=con, if_exists="replace")
+    df.to_sql(name=table_name, con=con, if_exists="replace", index=False)
     con.close()
 
 def get_all_collection_names_from_DB():
@@ -556,7 +556,8 @@ def get_traidingdays_per_nft():
                                     "more_than_100": df.shape[0] > 100,
                                     "more_than_150": df.shape[0] > 150,
                                     "more_than_200": df.shape[0] > 200,
-                                    "more_than_250": df.shape[0] > 250}
+                                    "more_than_250": df.shape[0] > 250,
+                                    "more_than_320": df.shape[0] > 325,}
 
     with open('data/length_nft.json', 'w', encoding='utf-8') as f:
         json.dump(dict_traidingdays, f, ensure_ascii=False, indent=4)
@@ -567,10 +568,11 @@ def get_traidingdays_per_nft():
         "more_than_150": 0,
         "more_than_200": 0,
         "more_than_250": 0,
+        "more_than_320": 0,
         "max": 0,
         "min": 99999
     }
-    arr_coll_250Plus = []
+    arr_coll_320Plus = []
     for key, value in dict_traidingdays.items():
         if value["more_than_50"] == True:
             sums["more_than_50"] += 1
@@ -582,7 +584,9 @@ def get_traidingdays_per_nft():
             sums["more_than_200"] += 1
         if value["more_than_250"] == True:
             sums["more_than_250"] += 1
-            arr_coll_250Plus.append(key)
+        if value["more_than_320"] == True:
+            sums["more_than_320"] += 1
+            arr_coll_320Plus.append(key)
         if value["number_of_tradingdays"] > sums["max"]:
             sums["max"] = value["number_of_tradingdays"]
         if value["number_of_tradingdays"] < sums["min"]:
@@ -590,7 +594,7 @@ def get_traidingdays_per_nft():
 
     print(sums)
 
-    return arr_coll_250Plus, dict_traidingdays
+    return arr_coll_320Plus, dict_traidingdays
 
 
 def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timestamp: int = 0) -> pd.DataFrame:
@@ -680,15 +684,16 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
         # read from DB
         df = read_df_from_sql(table_name=collection, is_collection=True)
         # drop all unneeded columns
-        df.drop(["index","cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV","cFP in Dollar", "perc return"], axis=1, inplace=True)
+        df.drop(["cFP","cLC","cV","maxFP","minFP","oFP","oLC","oV","cFP in Dollar"], axis=1, inplace=True)
         # if first collection then create the dataframe df_merged
         if idx == 0:
             df_merged = df
             df_merged.columns = ["ts", collection]
-            df_merged = df_merged[df_merged["ts"] >= start_timestamp].reset_index()
+            df_merged = df_merged[df_merged["ts"] >= start_timestamp].set_index('ts')
             continue
-        
-        df_merged = pd.concat([df_merged.set_index('ts'),df.set_index('ts')], axis=1, join='inner').reset_index(drop=True)
+        print(idx)
+        # print(df_merged)
+        df_merged = pd.concat([df_merged,df.set_index('ts')], axis=1, join='inner')
         # get rid of the column if it exist
         if "level_0" in df_merged.columns:
             df_merged.drop(columns=["level_0"], inplace=True)
@@ -698,6 +703,8 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
     # make a simple avg over all columns expect the first
     names = [*df_merged.columns[1:]]
     df_merged["avg"] = df_merged[names].mean(axis=1)
+    df_merged.reset_index(inplace=True)
+    print(df_merged)
 
     return df_merged
 
@@ -737,6 +744,6 @@ def plot_NFT_Price_Index(df_traidingpair: pd.DataFrame) -> None:
     df_traidingpair.plot(kind='line', x="Kline Close time", y=df_traidingpair.columns[-1], ax=axes, xlabel='Timestamp',  legend=True)
     # adjust plot and show it
     axes.legend(['NFT Price Index', 'BTC/USDT'])
-    fig.suptitle(f"NFT Price Index aus 200 Solana NFT-Kollektionen.\nKorrelation liegt bei {correlation}")
+    fig.suptitle(f"NFT Price Index aus ~200 Solana NFT-Kollektionen.\nKorrelation liegt bei {correlation}")
     plt.grid(True)
     plt.show()
