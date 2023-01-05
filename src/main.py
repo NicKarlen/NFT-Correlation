@@ -124,7 +124,7 @@ def step_9():
             casinonft, cold_sun, winning, imnotwordy, anima_alternis, uyab, trippart, magicstar
     """
     # create data
-    # f.prep_compare_all_returns() # -> runs for more than 1min
+    f.prep_compare_all_returns() # -> runs for more than 1min
     # plot data
     f.plot_compare_all_returns()
 
@@ -176,30 +176,30 @@ def step_11(input_collections: list[str] = None, start_timestamp: int = 0):
         f.write_df_to_sql(df=df_coll,table_name=coll, is_collection=True)
 
 
-def step_12(start_timestamp: int = 0):
+def step_12(start_timestamp: int = 0, tp_to_compare: str = "BTCUSDT"):
     """
         calc daily returns for all traidingpairs starting at the beginning or the start_timestamp.
     """
 
-    df_tp = f.read_df_from_sql(table_name="BTCUSDT")
+    df_tp = f.read_df_from_sql(table_name=tp_to_compare)
     df_tp = f.calc_daily_returns_for_tradingpair(df_traidingpair=df_tp,start_timestamp=start_timestamp)
-    f.write_df_to_sql(df=df_tp,table_name="BTCUSDT")
+    f.write_df_to_sql(df=df_tp,table_name=tp_to_compare)
     
 def step_13(input_collections: list[str] = ["degods", "galactic_geckos"], start_timestamp: int = 0):
     """
-        creat one dataframe with the collections that are older than 250 days and the to be compared traidingpair.
+        creat one dataframe with the collections that are older than 325 days and the to be compared traidingpair.
     """
     df_nft_price_index = f.create_NFT_Price_Index(collections = input_collections, start_timestamp = start_timestamp)
 
     f.write_df_to_sql(df=df_nft_price_index, table_name="NFT Price Index")
 
 
-def step_14():
+def step_14(tp_to_compare: str = "BTCUSDT"):
     """
         plot NFT-Price-Index and Bitcoin chart
     """
-    df_btc = f.read_df_from_sql(table_name="BTCUSDT")
-    f.plot_NFT_Price_Index(df_traidingpair=df_btc)
+    df_tp = f.read_df_from_sql(table_name=tp_to_compare)
+    f.plot_NFT_Price_Index(df_traidingpair=df_tp, tp_to_compare=tp_to_compare)
 
 
 
@@ -218,15 +218,15 @@ if __name__ == "__main__":
     # step_6()
     # step_7()
     # step_8()
-    # step_9()
+    step_9()
     """
         Delete DB before running it...
     """
-    st, colls = step_10()
-    step_11(input_collections=colls, start_timestamp=st)
-    step_12(start_timestamp=st)
-    step_13(input_collections = colls, start_timestamp=st)
-    step_14()
+    # st, colls = step_10()
+    # step_11(input_collections=colls, start_timestamp=st)
+    # step_12(start_timestamp=st, tp_to_compare="BTCUSDT")
+    # step_13(input_collections = colls, start_timestamp=st)
+    # step_14(tp_to_compare="BTCUSDT")
 
     """
         Collect raw data for all collections and tradingpairs (new DB)

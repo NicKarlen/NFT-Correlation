@@ -435,9 +435,9 @@ def calc_returns(collection: str, traidingpairs: list[str], delay: int = 0, retu
 
     # Drop the first and last row of the collection data, because the first and last row are no full days
     # and we can therefore not find the timestamp in the tradingpairs data
-    if return_dict == False:
-        df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
-        df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
+    
+    df_collection.drop(df_collection.tail(1).index,inplace=True) # drop last n rows
+    df_collection.drop(df_collection.head(1+delay).index,inplace=True) # drop first n rows
     # Get first and last row of the adjusted dataframe
     collection_first_row = df_collection.iloc[0]
     collection_last_row = df_collection.iloc[-1]
@@ -492,7 +492,7 @@ def prep_compare_all_returns() -> None:
     list_all_returns = []
     for idx, coll in enumerate(arr_top_collection):
         try:
-            list_all_returns.append(calc_returns(collection=coll, traidingpairs=["BTCUSDT"], return_dict=True))
+            list_all_returns.append(calc_returns(collection=coll, traidingpairs=["ETHUSDT"], return_dict=True))
         except Exception as e:
             print(e, f"collection name: {coll}")
 
@@ -531,12 +531,12 @@ def plot_compare_all_returns() -> None:
     distribution_Compare = df_returns["Compare_groupe"].value_counts().sort_index()
 
     # plot two bar charts
-    fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+    fig, axes = plt.subplots(nrows=2, ncols=1) #, sharex=True
     distribution_collection_ROI.plot.bar(ax=axes[0],ylabel='Count of Collections', xlabel="%-Return Gruppen")
     distribution_Compare.plot.bar(ax=axes[1],ylabel='Count of Collections', xlabel="%-Return Gruppen", color="orange")
     
     axes[0].title.set_text('%-Return über die gesamte Lebensdauer der Kollektionen in USD')
-    axes[1].title.set_text('%-Return über die gesamte Lebensdauer der Kollektionen in Bitcoin')
+    axes[1].title.set_text('%-Return über die gesamte Lebensdauer der Kollektionen in Ethereum')
     # axes[0].grid(True,linewidth=1)
     # axes[1].grid(True)
     plt.show()
@@ -557,7 +557,7 @@ def get_traidingdays_per_nft():
                                     "more_than_150": df.shape[0] > 150,
                                     "more_than_200": df.shape[0] > 200,
                                     "more_than_250": df.shape[0] > 250,
-                                    "more_than_320": df.shape[0] > 325,}
+                                    "more_than_325": df.shape[0] > 325,}
 
     with open('data/length_nft.json', 'w', encoding='utf-8') as f:
         json.dump(dict_traidingdays, f, ensure_ascii=False, indent=4)
@@ -568,11 +568,11 @@ def get_traidingdays_per_nft():
         "more_than_150": 0,
         "more_than_200": 0,
         "more_than_250": 0,
-        "more_than_320": 0,
+        "more_than_325": 0,
         "max": 0,
         "min": 99999
     }
-    arr_coll_320Plus = []
+    arr_coll_325Plus = []
     for key, value in dict_traidingdays.items():
         if value["more_than_50"] == True:
             sums["more_than_50"] += 1
@@ -584,9 +584,9 @@ def get_traidingdays_per_nft():
             sums["more_than_200"] += 1
         if value["more_than_250"] == True:
             sums["more_than_250"] += 1
-        if value["more_than_320"] == True:
-            sums["more_than_320"] += 1
-            arr_coll_320Plus.append(key)
+        if value["more_than_325"] == True:
+            sums["more_than_325"] += 1
+            arr_coll_325Plus.append(key)
         if value["number_of_tradingdays"] > sums["max"]:
             sums["max"] = value["number_of_tradingdays"]
         if value["number_of_tradingdays"] < sums["min"]:
@@ -594,7 +594,7 @@ def get_traidingdays_per_nft():
 
     print(sums)
 
-    return arr_coll_320Plus, dict_traidingdays
+    return arr_coll_325Plus, dict_traidingdays
 
 
 def calc_daily_returns_for_collections(df_collection: pd.DataFrame ,start_timestamp: int = 0) -> pd.DataFrame:
@@ -708,7 +708,7 @@ def create_NFT_Price_Index(collections: list[str], start_timestamp: int = 0):
 
     return df_merged
 
-def plot_NFT_Price_Index(df_traidingpair: pd.DataFrame) -> None:
+def plot_NFT_Price_Index(df_traidingpair: pd.DataFrame, tp_to_compare: str) -> None:
     """
         Plot a line chart with the nft price index and a traidingpair (like BTC/USDT)
     """
@@ -739,11 +739,12 @@ def plot_NFT_Price_Index(df_traidingpair: pd.DataFrame) -> None:
     # Create a figure and axes to plot on
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True)
     # plot the nft price index
-    df_nft_price_index.plot(kind='line', x="ts", y="avg",ax=axes, xlabel='timestamp', ylabel="Perc Return", legend=True)
+    df_nft_price_index.plot(kind='line', x="ts", y="avg",ax=axes, xlabel='timestamp', ylabel="Percentage Return", legend=True)
     # plot the traidingpair returns
     df_traidingpair.plot(kind='line', x="Kline Close time", y=df_traidingpair.columns[-1], ax=axes, xlabel='Timestamp',  legend=True)
     # adjust plot and show it
-    axes.legend(['NFT Price Index', 'BTC/USDT'])
+    axes.legend(['NFT Price Index', tp_to_compare])
     fig.suptitle(f"NFT Price Index aus ~200 Solana NFT-Kollektionen.\nKorrelation liegt bei {correlation}")
     plt.grid(True)
+    fig.set_size_inches(14.5, 7.5)
     plt.show()
